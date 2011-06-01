@@ -207,10 +207,14 @@ namespace btree {
     class node
     {
     public:
-      uint16_t        _height;         // 0 for the leaf node
+      uint16_t        _height;          // 0 for a leaf node
       uint16_t        _size;
-      node*           _parent_node;    // always a branch, except 0 for root node
-      branch_value*   _parent_element; // 0 for root node
+      node*           _parent_node;     // 0 for the root node
+      union
+      {
+        branch_value* _parent_element;  // non-root node
+        mbt_map*      _owner;           // root node
+      };
       union
       {
         leaf_value    _leaf_values[1];     // actual size determined by tree constructor
@@ -233,6 +237,8 @@ namespace btree {
       branch_value* branch_end()                    {return _branch_values + _size;}
       // pseudo-element branch_end()->first is valid; b-tree branches have size() + 1
       // child pointers - see your favorite computer science textbook.
+
+      node*         next_node();  // returns next node at same height; root node if end
     };
 
     //----------------------------------------------------------------------------------//
@@ -257,24 +263,25 @@ namespace btree {
         : m_node(np), m_element(ep) {}
 
     private:
-      iterator_type(mbt_map* owner)  // construct end iterator
-        : m_owner(owner), m_element(0) {}
+      iterator_type(mbt_map* owner)  // construct an end iterator
+        : m_node(0), m_owner(owner) {}
 
       friend class boost::iterator_core_access;
       friend class mbt_map;
 
-      union  // discriminated by m_element
+      typename mbt_map::node*        m_node;      // 0 indicates end iterator
+
+      union  // discriminated by m_node
       {
-        typename mbt_map::node*        m_node;   // non-end iterator
-        mbt_map*                       m_owner;  // end iterator
+       typename mbt_map::leaf_value*  m_element;  // not end iterator
+       mbt_map*                       m_owner;    // end iterator
       };
-      typename mbt_map::leaf_value*    m_element;  // 0 for end iterator
 
 
       VT& dereference() const
       {
-        BOOST_ASSERT_MSG(m_node, "dereferencing uninitialized iterator");
-        BOOST_ASSERT_MSG(m_element, "dereferencing end iterator");
+        BOOST_ASSERT_MSG(m_element, "attempt to dereference uninitialized iterator");
+        BOOST_ASSERT_MSG(m_node, "attempt to dereference end iterator");
 
         return *reinterpret_cast<VT*>(m_element);
       }
@@ -524,6 +531,65 @@ insert(const value_type& x)
   return std::pair<iterator, bool>(iterator(np, insert_begin), true);
 }
 
+//------------------------------  node::next_node()  -----------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+typename mbt_map<Key,T,Compare,Allocator>::node*
+mbt_map<Key,T,Compare,Allocator>::node::
+next_node()  // return next node at current height, root_node if end
+{
+  if (is_root())
+    return this;
+
+  node*          parent_np = parent_node();
+  branch_value*  parent_ep = parent_element();
+
+  if (parent_ep != parent_np->branch_end())
+    ++parent_ep;
+  else
+  {
+    parent_np = parent_node()->next_node();
+    if (parent_np->is_root())
+      return parent_np;
+    parent_ep = parent_np->branch_begin();
+  }
+
+  node* np = parent_ep->first;
+  np->parent_node(parent_np);
+  np->parent_element(parent_ep);
+  return np;
+}
+
+//--------------------------  iterator::increment()  -----------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+template <class VT>
+void
+mbt_map<Key,T,Compare,Allocator>::iterator_type<VT>::
+increment()
+{
+  BOOST_ASSERT_MSG(m_element, "attempt to increment uninitialized iterator");
+  BOOST_ASSERT_MSG(m_node, "attempt to increment end iterator");
+  BOOST_ASSERT(m_node->is_leaf());
+  BOOST_ASSERT(m_element >= m_node->leaf_begin());
+  BOOST_ASSERT(m_element < m_node->leaf_end());
+
+  if (++m_element != m_node->leaf_end())
+    return;
+
+  m_node = m_node->next_node();  // next leaf node, or root node if end
+
+  if (!m_node->is_root())
+  {
+    m_element = m_node->leaf_begin();
+    BOOST_ASSERT(m_element != m_node->leaf_end());
+  }
+  else // end() reached
+  {
+    m_owner = m_node->m_owner;
+    m_node = 0;
+  }
+}
 
 }  // btree
 }  // boost
