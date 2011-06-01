@@ -102,16 +102,16 @@ namespace btree {
     allocator_type get_allocator() const noexcept;
 
     // iterators:
-    iterator                begin() noexcept;
-    const_iterator          begin() const noexcept;
-    iterator                end() noexcept;
-    const_iterator          end() const noexcept;
+    iterator                begin() noexcept           {return m_begin();}
+    const_iterator          begin() const noexcept     {return m_begin();}
+    iterator                end() noexcept             {return iterator(this);}
+    const_iterator          end() const noexcept       {return const_iterator(this);}
     reverse_iterator        rbegin() noexcept;
     const_reverse_iterator  rbegin() const noexcept;
     reverse_iterator        rend() noexcept;
     const_reverse_iterator  rend() const noexcept;
-    const_iterator          cbegin() const noexcept;
-    const_iterator          cend() const noexcept;
+    const_iterator          cbegin() const noexcept    {return m_begin();}
+    const_iterator          cend() const noexcept      {return const_iterator(this);}
     const_reverse_iterator  crbegin() const noexcept;
     const_reverse_iterator  crend() const noexcept;
 
@@ -302,6 +302,8 @@ namespace btree {
     //                            private member functions                              //
     //----------------------------------------------------------------------------------//
 
+    iterator               m_begin() noexcept;
+
     branch_value_compare   branch_comp() const {return m_branch_value_compare;}
 
     void m_init(std::size_t node_sz)
@@ -352,6 +354,31 @@ mbt_map<Key,T,Compare,Allocator>::
   // TODO ...
 }
 
+//----------------------------------  m_begin()  ---------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+typename mbt_map<Key,T,Compare,Allocator>::iterator
+mbt_map<Key,T,Compare,Allocator>::
+m_begin() noexcept
+{
+  if (empty())
+    return end();
+
+  node* np = m_root;
+
+  // work down the tree until a leaf is reached
+  while (np->is_branch())
+  {
+    // create the child->parent list
+    node* child_np = np->branch_begin()->first;
+    child_np->parent_node(np);
+    child_np->parent_element(np->branch_begin());
+    np = child_np;
+  }
+
+  return iterator(np, np->leaf_begin());
+}
+
 //-----------------------------  m_special_lower_bound()  ------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>
@@ -396,6 +423,10 @@ mbt_map<Key,T,Compare,Allocator>::
 insert(const value_type& x)
 {
   iterator insert_point = m_special_lower_bound(x.first);
+
+  std::cout << "***" << (insert_point.m_element == insert_point.m_node->leaf_end())
+  << (key_comp()(x.first, insert_point->first))
+  << (key_comp()(insert_point->first, x.first)) << std::endl;
 
   bool unique = insert_point.m_element == insert_point.m_node->leaf_end()
          || key_comp()(x.first, insert_point->first)
@@ -476,6 +507,7 @@ insert(const value_type& x)
 
   std::move_backward(insert_begin, np->leaf_end(), np->leaf_end()+1);
   *insert_begin = x;
+  ++np->_size;
   ++m_size;
 
 //  // if there is a new node, its initial key and node_id are inserted into parent
