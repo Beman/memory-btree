@@ -1767,8 +1767,52 @@
 
 1294779211 c:\boost\trunk\boost\current_function.hpp
 
-1306770522 source:c:\boost\btree-in-memory\libs\btree\test\smoke_test.cpp
+1306928981 source:c:\boost\btree-in-memory\libs\btree\test\smoke_test.cpp
 	<boost/config.hpp>
 	<boost/detail/lightweight_main.hpp>
+	<boost/detail/lightweight_test.hpp>
 	<boost/btree/mbt_map.hpp>
+	<boost/type_traits/is_same.hpp>
+	<utility>
+
+1306940861 c:\boost\btree-in-memory\boost\btree\mbt_map.hpp
+	<cstddef>
+	<utility>
+	<memory>
+	<iterator>
+	<algorithm>
+	<boost/iterator/iterator_facade.hpp>
+	<boost/assert.hpp>
+	<cstring>
+
+1294779211 c:\boost\trunk\boost\cstdint.hpp
+	<boost/config.hpp>
+	<inttypes.h>
+	<inttypes.h>
+	<stdint.h>
+	<inttypes.h>
+	<boost/limits.hpp>
+	<limits.h>
+	<limits.h>
+
+1294966954 c:\boost\trunk\boost\limits.hpp
+	<boost/config.hpp>
+	<boost/detail/limits.hpp>
+	<limits>
+	<climits>
+
+1294779133 c:\boost\trunk\boost\detail\limits.hpp
+	<climits>
+	<cfloat>
+	<boost/config.hpp>
+	<boost/detail/endian.hpp>
+	<cwchar>
+
+1294779133 c:\boost\trunk\boost\detail\endian.hpp
+	<endian.h>
+
+1298596178 c:\boost\trunk\boost\detail\lightweight_test.hpp
+	<iostream>
+	<boost/current_function.hpp>
+	<boost/assert.hpp>
 

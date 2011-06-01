@@ -13,7 +13,9 @@
 /*
 TODO:
 
-* new_leaf_node(), new_branch_note(), should use allocator!
+  * Implement ~mbt_map() and clear()
+
+  * new_node() should use allocator!
 
 */
 
@@ -24,9 +26,7 @@ namespace btree {
     class Allocator = std::allocator<std::pair<const Key, T> > >
   class mbt_map   // short for memory_btree_map
   {
-   class node;
-    class leaf_node;
-    class branch_node;
+    class node;
     template <class VT>
       class iterator_type;
   public:
@@ -67,6 +67,14 @@ namespace btree {
       {
         return comp(x.first, y.first);
       }
+      bool operator()(const Key& k, const value_type& y) const
+      {
+        return comp(k, y.first);
+      }
+      bool operator()(const value_type& x, const Key& k) const
+      {
+        return comp(x.first, k);
+      }
     };
 
     // 23.4.4.2, construct/copy/destroy:
@@ -85,7 +93,7 @@ namespace btree {
     mbt_map(mbt_map&&, const Allocator&);
 //    mbt_map(initializer_list<value_type>, const Compare& = Compare(),
 //      const Allocator& = Allocator());
-    ~mbt_map();
+   ~mbt_map();
     mbt_map<Key,T,Compare,Allocator>&
       operator=(const mbt_map<Key,T,Compare,Allocator>& x);
     mbt_map<Key,T,Compare,Allocator>&
@@ -124,17 +132,19 @@ namespace btree {
                             emplace(Args&&... args);
     template <class... Args>
       iterator              emplace_hint(const_iterator position, Args&&... args);
+
     std::pair<iterator, bool>
                             insert(const value_type& x);
-    template <class P>
-      std::pair<iterator, bool>
-                            insert(P&& x);
-    iterator                insert(const_iterator position, const value_type& x);
-    template <class P>
-      iterator              insert(const_iterator position, P&&);
-    template <class InputIterator>
-      void                  insert(InputIterator first, InputIterator last);
+//    template <class P>
+//      std::pair<iterator, bool>
+//                            insert(P&& x);
+//    iterator                insert(const_iterator position, const value_type& x);
+//    template <class P>
+//      iterator              insert(const_iterator position, P&&);
+//    template <class InputIterator>
+//      void                  insert(InputIterator first, InputIterator last);
 //    void                    insert(initializer_list<value_type>);
+
     iterator                erase(const_iterator position);
     size_type               erase(const key_type& x);
     iterator                erase(const_iterator first, const_iterator last);
@@ -161,11 +171,9 @@ namespace btree {
   private:
 
     friend class node;
-    friend class branch_node;
-    friend class leaf_node;
 
     typedef std::pair<Key, T>      leaf_value;
-    typedef std::pair<node*, Key>  branch_value;
+    typedef std::pair<node*, Key>  branch_value;  // first is pointer to child node
 
 
     //----------------------------------------------------------------------------------//
@@ -186,43 +194,45 @@ namespace btree {
       {
         return comp(x.second, y.second);
       }
+      bool operator()(const Key& k, const branch_value& y) const
+      {
+        return comp(k, y.second);
+      }
+      bool operator()(const branch_value& x, const Key& k) const
+      {
+        return comp(x.second, k);
+      }
     };
 
     class node
     {
     public:
-      uint16_t      _height;   // 0 for the leaf node
-      uint16_t      _size;
-      branch_node*  _parent_node;  // always points to a branch, except 0 for root node
-      branch_value* _parent_element; // 0 for root node
-
+      uint16_t        _height;         // 0 for the leaf node
+      uint16_t        _size;
+      node*           _parent_node;    // always a branch, except 0 for root node
+      branch_value*   _parent_element; // 0 for root node
+      union
+      {
+        leaf_value    _leaf_values[1];     // actual size determined by tree constructor
+        branch_value  _branch_values[1];   // ditto
+      };
       bool          is_leaf() const                 {return _height == 0;}
       bool          is_branch() const               {return _height != 0;}
       bool          is_root() const                 {return _parent_node == 0;}
       std::size_t   size() const                    {return _size;}
-      branch_node*  parent_node() const             {return _parent_node;}
+      node*         parent_node() const             {return _parent_node;}
       branch_value* parent_element() const          {return _parent_element;}
       void          size(std::size_t n)             {_size = n;}
-      void          parent_node(branch_node* p)     {_parent_node = p;}
+      void          parent_node(node* p)            {_parent_node = p;}
       void          parent_element(branch_value* p) {_parent_element = p;}
-    };
 
-    class leaf_node : public node
-    {
-    public:
-      leaf_value _values[1];
+      leaf_value*   leaf_begin()                    {return _leaf_values;}
+      leaf_value*   leaf_end()                      {return _leaf_values + _size;}
 
-      leaf_value* begin()        {return _values;}
-      leaf_value* end()          {return &_values[size()];}
-    };
-
-    class branch_node : public node
-    {
-    public:
-      branch_value _values[1]; // end pseudo-element first is dereferenceable & valid
-
-      branch_value* begin()      {return _values;}
-      branch_value* end()        {return &_values[size()];}
+      branch_value* branch_begin()                  {return _branch_values;}
+      branch_value* branch_end()                    {return _branch_values + _size;}
+      // pseudo-element branch_end()->first is valid; b-tree branches have size() + 1
+      // child pointers - see your favorite computer science textbook.
     };
 
     //----------------------------------------------------------------------------------//
@@ -239,33 +249,34 @@ namespace btree {
 #     ifdef NDEBUG
        {}
 #     else
-         : m_element(0) {m_union.m_node = 0;}
- #     endif
+        : m_node(0), m_element(0) {}
+#     endif
 
-      iterator_type(typename mbt_map::leaf_node* np,
+      iterator_type(typename mbt_map::node* np,
                     typename mbt_map::leaf_value* ep)
-        : m_element(ep) {m_union.m_node = np;}
+        : m_node(np), m_element(ep) {}
 
     private:
       iterator_type(mbt_map* owner)  // construct end iterator
-        : m_element(0) {m_union.m_owner = owner;}
+        : m_owner(owner), m_element(0) {}
 
       friend class boost::iterator_core_access;
       friend class mbt_map;
 
       union  // discriminated by m_element
       {
-        typename mbt_map::leaf_node*          m_node;   // non-end iterator
-        mbt_map*                              m_owner;  // end iterator
-      }                                     m_union;
+        typename mbt_map::node*        m_node;   // non-end iterator
+        mbt_map*                       m_owner;  // end iterator
+      };
       typename mbt_map::leaf_value*    m_element;  // 0 for end iterator
 
 
-      T& dereference() const
+      VT& dereference() const
       {
-        BOOST_ASSERT_MSG(m_union.m_node, "dereferencing uninitialized iterator");
+        BOOST_ASSERT_MSG(m_node, "dereferencing uninitialized iterator");
         BOOST_ASSERT_MSG(m_element, "dereferencing end iterator");
-        return *m_element;
+
+        return *reinterpret_cast<VT*>(m_element);
       }
 
       bool equal(const iterator_type& rhs) const {return m_element == rhs.m_element;}
@@ -282,10 +293,10 @@ namespace btree {
     value_compare         m_value_compare;
     branch_value_compare  m_branch_value_compare;
     const Allocator&      m_alloc;
-    size_type             m_size;                 // number of elements in container
-    size_type             m_max_leaf_node_size;   // maximum number of elements in values
-    size_type             m_max_branch_node_size; // maximum number of elements in values
-    node*                 m_root;                 // invariant: there is always a root
+    size_type             m_size;             // number of elements in container
+    size_type             m_max_leaf_size;    // maximum number of elements
+    size_type             m_max_branch_size;  // maximum number of elements
+    node*                 m_root;             // invariant: there is always a root
 
     //----------------------------------------------------------------------------------//
     //                            private member functions                              //
@@ -296,22 +307,30 @@ namespace btree {
     void m_init(std::size_t node_sz)
     {
       m_size = 0;
-      m_max_leaf_node_size = node_sz / sizeof(leaf_value);
-      m_max_branch_node_size = node_sz / sizeof(branch_value);
+      m_max_leaf_size = node_sz / sizeof(leaf_value);
+      m_max_branch_size = node_sz / sizeof(branch_value);
       m_root = new_leaf_node();
     }
 
-    leaf_node* new_leaf_node()
+    union node_values
     {
-      std::size_t leaf_node_size = sizeof(leaf_node)
-       + (m_max_leaf_node_size-1) * sizeof(leaf_value);
-      leaf_node* np = reinterpret_cast<leaf_node*>(new char[leaf_node_size]);
+      leaf_value    _leaf_values[1];     // actual size determined by tree constructor
+      branch_value  _branch_values[1];   // ditto
+    };
+
+
+    node* new_leaf_node()
+    {
+      std::size_t node_size = sizeof(node) - sizeof(node_values)
+       + m_max_leaf_size * sizeof(leaf_value);
+
+      node* np = reinterpret_cast<node*>(new char[node_size]);
  #  ifdef NDEBUG
       np->_height = 0;
       np->_size = 0;
       np->_parent = 0;
  #  else
-      std::memset(np, 0, leaf_node_size);
+      std::memset(np, 0, node_size);
  #  endif
      return np;
     }
@@ -324,6 +343,15 @@ namespace btree {
 //                                  implementation                                      //
 //--------------------------------------------------------------------------------------//
 
+//----------------------------------  ~mbt_map()  --------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+mbt_map<Key,T,Compare,Allocator>::
+~mbt_map()
+{
+  // TODO ...
+}
+
 //-----------------------------  m_special_lower_bound()  ------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>
@@ -331,34 +359,33 @@ typename mbt_map<Key,T,Compare,Allocator>::iterator
 mbt_map<Key,T,Compare,Allocator>::
 m_special_lower_bound(const key_type& k) const
 {
-  branch_node* bp = static_cast<branch_node*>(m_root);
+  node* np = m_root;
 
   // search branches down the tree until a leaf is reached
-  while (bp->is_branch())
+  while (np->is_branch())
   {
     branch_value* low
-      = std::lower_bound(bp->begin(), bp->end(), k, branch_comp());
+      = std::lower_bound(np->branch_begin(), np->branch_end(), k, branch_comp());
 
     if ( /*(header().flags() & btree::flags::unique)
-      &&*/ low != bp->end()
+      &&*/ low != np->branch_end()
       && !key_comp()(k, low->second)) // if k isn't less that low key, low is equal
       ++low;                         // and so must be incremented; this follows from
                                      // the branch node invariant for unique containers
 
     // create the child->parent list
-    branch_node* child_np = low->first;
-    child_np->parent(bp);
-    child_np->parent_element(low);
+    node* child = low->first;
+    child->parent_node(np);
+    child->parent_element(low);
 
-    bp = child_np;
+    np = child;
   }
 
   //  search leaf
-  leaf_node* lp = static_cast<leaf_node*>(bp);
   leaf_value* low
-    = std::lower_bound(lp->begin(), lp->end(), k, value_comp());
+    = std::lower_bound(np->leaf_begin(), np->leaf_end(), k, value_comp());
 
-  return iterator(lp, low);
+  return iterator(np, low);
 }
 
 //-----------------------------------  insert()  ---------------------------------------//
@@ -370,15 +397,99 @@ insert(const value_type& x)
 {
   iterator insert_point = m_special_lower_bound(x.first);
 
-  bool unique = insert_point.m_element == insert_point.m_union.m_node->end()
+  bool unique = insert_point.m_element == insert_point.m_node->leaf_end()
          || key_comp()(x.first, insert_point->first)
          || key_comp()(insert_point->first, x.first);
 
   if (!unique)
-    return std::pair<const_iterator, bool>(insert_point, false);
+    return std::pair<iterator, bool>(insert_point, false);
 
+  //  do the insert
 
- return std::pair<const_iterator, bool>(insert_point, true);
+  node*        np = insert_point.m_node;
+  leaf_value*  insert_begin = insert_point.m_element;
+  node*        np2 = 0;
+
+  BOOST_ASSERT_MSG(np->is_leaf(), "internal error");
+  BOOST_ASSERT_MSG(np->size() <= m_max_leaf_size, "internal error");
+
+//  if (np->size() + value_size > m_max_leaf_size)  // no room on node?
+//  {
+//    //  no room on node, so node must be split
+//
+//    if (np->level() == m_hdr.root_level()) // splitting the root?
+//      m_new_root();  // create a new root
+//
+//    np2 = m_new_node(np->level());  // create the new node
+//
+//    // ck pack conditions now, since leaf seq list update may chg header().last_node_id()
+//    if (m_ok_to_pack
+//        && (insert_begin != np->leaf().end() || np->node_id() != header().last_node_id()))
+//      m_ok_to_pack = false;  // conditions for pack optimization not met
+//
+//    if (np->node_id() == header().last_node_id())
+//      m_hdr.last_node_id(np2->node_id());
+//
+//    // apply pack optimization if applicable
+//    if (m_ok_to_pack)  // have all inserts been ordered and no erases occurred?
+//    {
+//      // pack optimization: instead of splitting np, just put value alone on np2
+//      m_memcpy_value(&*np2->leaf().begin(), &key_, key_size, &mapped_value_, mapped_size);  // insert value
+//      np2->size(value_size);
+//      BOOST_ASSERT(np->parent()->node_id() == np->parent_node_id()); // max_cache_size logic OK?
+//      m_branch_insert(np->parent(), np->parent_element(),
+//        key(*np2->leaf().begin()), np2->node_id());
+//      ++m_size;
+//      return const_iterator(np2, np2->leaf().begin());
+//    }
+//
+//    // split node np by moving half the elements, by size, to node p2
+//    leaf_iterator split_begin(np->leaf().begin());
+//    split_begin.advance_by_size(np->leaf().size() / 2);
+//    ++split_begin; // for leaves, prefer more aggressive split begin
+//    std::size_t split_sz = char_distance(&*split_begin, &*np->leaf().end());
+//
+//    // TODO: if the insert point will fall on the new node, it would be faster to
+//    // copy the portion before the insert point, copy the value being inserted, and
+//    // finally copy the portion after the insert point. However, that's a fair amount of
+//    // additional code for something that only happens on half of all leaf splits on average.
+//
+//    std::memcpy(&*np2->leaf().begin(), &*split_begin, split_sz);
+//    np2->size(split_sz);
+//    std::memset(&*split_begin, 0,                         // zero unused space to make
+//      char_distance(&*split_begin, &*np->leaf().end()));  //  file dumps easier to read
+//    np->size(np->size() - split_sz);
+//
+//    // adjust np and insert_begin if they now fall on the new node due to the split
+//    if (&*split_begin < &*insert_begin)
+//    {
+//      np = np2;
+//      insert_begin = leaf_iterator(&*np->leaf().begin(),
+//        char_distance(&*split_begin, &*insert_begin));
+//    }
+//  }
+//
+
+  //  insert x into values at insert_begin
+  BOOST_ASSERT(insert_begin >= np->leaf_begin());
+  BOOST_ASSERT(insert_begin <= np->leaf_end());
+
+  std::move_backward(insert_begin, np->leaf_end(), np->leaf_end()+1);
+  *insert_begin = x;
+  ++m_size;
+
+//  // if there is a new node, its initial key and node_id are inserted into parent
+//  if (np2)
+//  {
+//    BOOST_ASSERT(insert_iter.m_node->parent()->node_id() \
+//      == insert_iter.m_node->parent_node_id()); // max_cache_size logic OK?
+//    m_branch_insert(insert_iter.m_node->parent(),
+//      insert_iter.m_node->parent_element(),
+//      key(*np2->leaf().begin()), np2->node_id());
+//  }
+
+//std::cout << "***insert done" << std::endl;
+  return std::pair<iterator, bool>(iterator(np, insert_begin), true);
 }
 
 
