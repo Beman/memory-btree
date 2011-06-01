@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="Debug" />
+	<File name="..\..\..\..\..\boost\btree\mbt_map.hpp" open="1" top="1" tabpos="2">
+		<Cursor position="14478" topLine="312" />
+	</File>
+	<File name="..\..\smoke_test.cpp" open="1" top="0" tabpos="1">
+		<Cursor position="44" topLine="0" />
+	</File>
+</CodeBlocks_layout_file>
