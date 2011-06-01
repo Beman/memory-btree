@@ -366,7 +366,7 @@ m_special_lower_bound(const key_type& k) const
 template <class Key, class T, class Compare, class Allocator>
 std::pair<typename mbt_map<Key,T,Compare,Allocator>::iterator, bool>
 mbt_map<Key,T,Compare,Allocator>::
-insert(const value_type& x)...
+insert(const value_type& x)
 {
   iterator insert_point = m_special_lower_bound(x.first);
 
