@@ -221,9 +221,11 @@ namespace btree {
       };
       union
       {
-        leaf_value    _leaf_values[1];     // actual size determined by tree constructor
+        leaf_value    _leaf_values[1];     // actual size determined by constructor
         branch_value  _branch_values[1];   // ditto
       };
+
+      uint16_t      height() const                  {return _height;}
       bool          is_leaf() const                 {return _height == 0;}
       bool          is_branch() const               {return _height != 0;}
       bool          is_root() const                 {return _parent_node == 0;}
@@ -231,6 +233,8 @@ namespace btree {
       node*         parent_node() const             {return _parent_node;}
       branch_value* parent_element() const          {return _parent_element;}
       mbt_map*      owner() const                   {return _owner;}
+
+      void          height(uint16_t h)              {_height = h;}
       void          size(std::size_t n)             {_size = n;}
       void          parent_node(node* p)            {_parent_node = p;}
       void          parent_element(branch_value* p) {_parent_element = p;}
@@ -328,7 +332,7 @@ namespace btree {
       m_size = 0;
       m_max_leaf_size = node_sz / sizeof(leaf_value);
       m_max_branch_size = node_sz / sizeof(branch_value);
-      m_root = new_leaf_node();
+      m_root = m_new_node(0U);
       m_root->owner(this);
     }
 
@@ -338,21 +342,8 @@ namespace btree {
       branch_value  _branch_values[1];   // ditto
     };
 
-    node* new_leaf_node()
-    {
-      std::size_t node_size = sizeof(node) - sizeof(node_values)
-       + m_max_leaf_size * sizeof(leaf_value);
-
-      node* np = reinterpret_cast<node*>(new char[node_size]);
- #  ifdef NDEBUG
-      np->_height = 0;
-      np->_size = 0;
-      np->_parent = 0;
- #  else
-      std::memset(np, 0, node_size);
- #  endif
-     return np;
-    }
+    node* m_new_node(uint16_t height_);
+    void  m_new_root();
 
     iterator m_special_lower_bound(const key_type& k) const;
 
@@ -369,6 +360,29 @@ mbt_map<Key,T,Compare,Allocator>::
 ~mbt_map()
 {
   // TODO ...
+}
+
+//----------------------------------  m_new_node  --------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+typename mbt_map<Key,T,Compare,Allocator>::node*
+mbt_map<Key,T,Compare,Allocator>::
+m_new_node(uint16_t height_)
+{
+  std::size_t node_size = sizeof(node) - sizeof(node_values) +
+   (height_ ? m_max_branch_size * sizeof(branch_value)
+            : m_max_leaf_size * sizeof(leaf_value));
+
+  node* np = reinterpret_cast<node*>(new char[node_size]);
+#ifdef NDEBUG
+  np->height(height_);
+  np->size(0);
+  np->parent_node(0);
+  np->parent_element(0);
+#else
+  std::memset(np, 0, node_size);
+#endif
+  return np;
 }
 
 //----------------------------------  m_begin()  ---------------------------------------//
@@ -432,6 +446,24 @@ m_special_lower_bound(const key_type& k) const
   return iterator(np, low);
 }
 
+//----------------------------------- m_new_root() -------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+void
+mbt_map<Key,T,Compare,Allocator>::
+m_new_root()
+{
+  // create a new root containing only the end pseudo-element
+  node* old_root = m_root;
+  m_root = m_new_node(old_root->height()+1);
+  m_root->branch_begin()->first = old_root;
+  m_root->size(0);  // the end pseudo-element doesn't count as an element
+  m_root->parent_node(0);
+  m_root->owner(this);
+  old_root->parent_node(m_root);
+  old_root->parent_element(m_root->branch_begin());
+}
+
 //-----------------------------------  insert()  ---------------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>
@@ -461,23 +493,18 @@ insert(const value_type& x)
   BOOST_ASSERT_MSG(np->is_leaf(), "internal error");
   BOOST_ASSERT_MSG(np->size() <= m_max_leaf_size, "internal error");
 
-//  if (np->size() + value_size > m_max_leaf_size)  // no room on node?
-//  {
-//    //  no room on node, so node must be split
-//
-//    if (np->level() == m_hdr.root_level()) // splitting the root?
-//      m_new_root();  // create a new root
-//
-//    np2 = m_new_node(np->level());  // create the new node
-//
+  if (np->size() == m_max_leaf_size)  // if no room on node, node must be split
+  {
+    if (np->is_root()) // splitting the root?
+      m_new_root();  // create a new root
+
+    np2 = m_new_node(np->height());  // create the new node
+
 //    // ck pack conditions now, since leaf seq list update may chg header().last_node_id()
 //    if (m_ok_to_pack
 //        && (insert_begin != np->leaf().end() || np->node_id() != header().last_node_id()))
 //      m_ok_to_pack = false;  // conditions for pack optimization not met
-//
-//    if (np->node_id() == header().last_node_id())
-//      m_hdr.last_node_id(np2->node_id());
-//
+
 //    // apply pack optimization if applicable
 //    if (m_ok_to_pack)  // have all inserts been ordered and no erases occurred?
 //    {
@@ -490,39 +517,32 @@ insert(const value_type& x)
 //      ++m_size;
 //      return const_iterator(np2, np2->leaf().begin());
 //    }
-//
-//    // split node np by moving half the elements, by size, to node p2
-//    leaf_iterator split_begin(np->leaf().begin());
-//    split_begin.advance_by_size(np->leaf().size() / 2);
-//    ++split_begin; // for leaves, prefer more aggressive split begin
-//    std::size_t split_sz = char_distance(&*split_begin, &*np->leaf().end());
-//
-//    // TODO: if the insert point will fall on the new node, it would be faster to
-//    // copy the portion before the insert point, copy the value being inserted, and
-//    // finally copy the portion after the insert point. However, that's a fair amount of
-//    // additional code for something that only happens on half of all leaf splits on average.
-//
-//    std::memcpy(&*np2->leaf().begin(), &*split_begin, split_sz);
-//    np2->size(split_sz);
-//    std::memset(&*split_begin, 0,                         // zero unused space to make
-//      char_distance(&*split_begin, &*np->leaf().end()));  //  file dumps easier to read
-//    np->size(np->size() - split_sz);
-//
-//    // adjust np and insert_begin if they now fall on the new node due to the split
-//    if (&*split_begin < &*insert_begin)
-//    {
-//      np = np2;
-//      insert_begin = leaf_iterator(&*np->leaf().begin(),
-//        char_distance(&*split_begin, &*insert_begin));
-//    }
-//  }
-//
 
-  //  insert x into values at insert_begin
+    // split node np by moving half the elements to node np2
+    np2->size(np->size() / 2);  // round down to minimize move size
+    np->size(np->size() - np2->size());
+    std::move(np->leaf_begin() + np->size(), np->leaf_end(), np2->leaf_begin());
+
+    // TODO: if the insert point will fall on the new node, it would be faster to
+    // copy the portion before the insert point, copy the value being inserted, and
+    // finally copy the portion after the insert point. However, that's a fair amount of
+    // additional code for something that only happens on half of all leaf splits on average.
+
+    // adjust np and insert_begin if they now fall on the new node due to the split
+    if (np->leaf_end() <= insert_begin)
+    {
+      insert_begin = np2->leaf_begin() + (insert_begin - np->leaf_end());
+      np = np2;
+    }
+  }
+
   BOOST_ASSERT(insert_begin >= np->leaf_begin());
   BOOST_ASSERT(insert_begin <= np->leaf_end());
 
+  // make room for insert
   std::move_backward(insert_begin, np->leaf_end(), np->leaf_end()+1);
+
+  //  insert x at insert_begin
   *insert_begin = x;
   ++np->_size;
   ++m_size;
