@@ -180,6 +180,8 @@ namespace btree {
     //                             private nested classes                               //
     //----------------------------------------------------------------------------------//
 
+    //-------------------------  class branch_value_compare  ---------------------------//
+
     class branch_value_compare
     {
       friend class mbt_map;
@@ -204,6 +206,8 @@ namespace btree {
       }
     };
 
+    //--------------------------------  class node  ------------------------------------//
+
     class node
     {
     public:
@@ -226,9 +230,11 @@ namespace btree {
       std::size_t   size() const                    {return _size;}
       node*         parent_node() const             {return _parent_node;}
       branch_value* parent_element() const          {return _parent_element;}
+      mbt_map*      owner() const                   {return _owner;}
       void          size(std::size_t n)             {_size = n;}
       void          parent_node(node* p)            {_parent_node = p;}
       void          parent_element(branch_value* p) {_parent_element = p;}
+      void          owner(mbt_map* o)               {_owner = o;}
 
       leaf_value*   leaf_begin()                    {return _leaf_values;}
       leaf_value*   leaf_end()                      {return _leaf_values + _size;}
@@ -263,7 +269,7 @@ namespace btree {
         : m_node(np), m_element(ep) {}
 
     private:
-      iterator_type(mbt_map* owner)  // construct an end iterator
+      iterator_type(mbt_map* owner)  // construct end iterator
         : m_node(0), m_owner(owner) {}
 
       friend class boost::iterator_core_access;
@@ -319,6 +325,7 @@ namespace btree {
       m_max_leaf_size = node_sz / sizeof(leaf_value);
       m_max_branch_size = node_sz / sizeof(branch_value);
       m_root = new_leaf_node();
+      m_root->owner(this);
     }
 
     union node_values
@@ -326,7 +333,6 @@ namespace btree {
       leaf_value    _leaf_values[1];     // actual size determined by tree constructor
       branch_value  _branch_values[1];   // ditto
     };
-
 
     node* new_leaf_node()
     {
@@ -586,7 +592,7 @@ increment()
   }
   else // end() reached
   {
-    m_owner = m_node->m_owner;
+    m_owner = m_node->owner();
     m_node = 0;
   }
 }

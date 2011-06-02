@@ -23,39 +23,59 @@ int cpp_main(int, char*[])
 
   cout << "construction test" << endl;
 
-  map m;
+  map bt;
 
-  BOOST_TEST_EQ(m.size(), 0U);
+  BOOST_TEST_EQ(bt.size(), 0U);
 
   cout << "insertion test" << endl;
 
   std::pair<const int, long> v1(1, 1*100);
-  m.insert(v1);
-  BOOST_TEST_EQ(m.size(), 1U);
+  bt.insert(v1);
+  BOOST_TEST_EQ(bt.size(), 1U);
 
-  m.insert(std::make_pair(3, 3*100));
-  BOOST_TEST_EQ(m.size(), 2U);
+  bt.insert(std::make_pair(3, 3*100));
+  BOOST_TEST_EQ(bt.size(), 2U);
 
-  m.insert(std::make_pair(2, 2*100));
-  BOOST_TEST_EQ(m.size(), 3U);
+  bt.insert(std::make_pair(2, 2*100));
+  BOOST_TEST_EQ(bt.size(), 3U);
 
-  std::pair<map::iterator, bool> result = m.insert(v1);
+  std::pair<map::iterator, bool> result = bt.insert(v1);
   BOOST_TEST(!result.second);
-  BOOST_TEST_EQ(m.size(), 3U);
+  BOOST_TEST_EQ(bt.size(), 3U);
 
   cout << "iterator test" << endl;
 
-  map::iterator it = m.begin();
+  map::iterator it = bt.begin();
   BOOST_TEST_EQ(it->first, 1);
   BOOST_TEST_EQ(it->second, 100);
 
-  cout << "const_iterator test" << endl;
+//  cout << "const_iterator test" << endl;
+//
+//  map::const_iterator const_it = bt.begin();
+//  BOOST_TEST_EQ(const_it->first, 1);
+//  BOOST_TEST_EQ(const_it->second, 100);
+//
+//  cout << "iterator conversion test" << endl;
+//
+//  it = bt.begin();
+//  const_it = bt.end();
+//  BOOST_TEST(const_it != it);
+//  const_it = it;
+//  BOOST_TEST(const_it == it);
 
-  map::iterator const_it = m.begin();
-  BOOST_TEST_EQ(const_it->first, 1);
-  BOOST_TEST_EQ(const_it->second, 100);
+  cout << "iteration test" << endl;
 
-
+  it = bt.begin();
+  BOOST_TEST_EQ(it->first, 1);
+  BOOST_TEST_EQ(it->second, 100);
+  ++it;
+  BOOST_TEST_EQ(it->first, 2);
+  BOOST_TEST_EQ(it->second, 200);
+  ++it;
+  BOOST_TEST_EQ(it->first, 3);
+  BOOST_TEST_EQ(it->second, 300);
+  ++it;
+  BOOST_TEST(it == bt.end());
 
   return report_errors();
 }
