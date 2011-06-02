@@ -49,19 +49,19 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(it->first, 1);
   BOOST_TEST_EQ(it->second, 100);
 
-//  cout << "const_iterator test" << endl;
-//
-//  map::const_iterator const_it = bt.begin();
-//  BOOST_TEST_EQ(const_it->first, 1);
-//  BOOST_TEST_EQ(const_it->second, 100);
-//
-//  cout << "iterator conversion test" << endl;
-//
-//  it = bt.begin();
-//  const_it = bt.end();
-//  BOOST_TEST(const_it != it);
-//  const_it = it;
-//  BOOST_TEST(const_it == it);
+  cout << "const_iterator test" << endl;
+
+  map::const_iterator const_it = bt.begin();
+  BOOST_TEST_EQ(const_it->first, 1);
+  BOOST_TEST_EQ(const_it->second, 100);
+
+  cout << "iterator conversion test" << endl;
+
+  it = bt.begin();
+  const_it = bt.end();
+  BOOST_TEST(const_it != it);
+  const_it = it;
+  BOOST_TEST(const_it == it);
 
   cout << "iteration test" << endl;
 

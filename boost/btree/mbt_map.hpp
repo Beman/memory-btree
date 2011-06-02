@@ -268,6 +268,10 @@ namespace btree {
                     typename mbt_map::leaf_value* ep)
         : m_node(np), m_element(ep) {}
 
+      template <class VU>
+      iterator_type(iterator_type<VU> const& other)
+        : m_node(other.m_node), m_element(other.m_element) {}
+
     private:
       iterator_type(mbt_map* owner)  // construct end iterator
         : m_node(0), m_owner(owner) {}
@@ -283,7 +287,6 @@ namespace btree {
        mbt_map*                       m_owner;    // end iterator
       };
 
-
       VT& dereference() const
       {
         BOOST_ASSERT_MSG(m_element, "attempt to dereference uninitialized iterator");
@@ -292,7 +295,8 @@ namespace btree {
         return *reinterpret_cast<VT*>(m_element);
       }
 
-      bool equal(const iterator_type& rhs) const {return m_element == rhs.m_element;}
+      template <class VU>
+      bool equal(const iterator_type<VU>& rhs) const {return m_element == rhs.m_element;}
 
       void increment();
       void decrement();
