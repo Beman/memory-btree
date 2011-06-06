@@ -2,9 +2,9 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Debug" />
 	<File name="..\..\..\..\..\boost\btree\mbt_map.hpp" open="1" top="1" tabpos="2">
-		<Cursor position="11273" topLine="231" />
+		<Cursor position="21447" topLine="572" />
 	</File>
 	<File name="..\..\smoke_test.cpp" open="1" top="0" tabpos="1">
-		<Cursor position="1582" topLine="27" />
+		<Cursor position="1582" topLine="0" />
 	</File>
 </CodeBlocks_layout_file>

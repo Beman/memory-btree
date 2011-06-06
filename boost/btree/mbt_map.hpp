@@ -550,8 +550,6 @@ insert(const value_type& x)
 //  // if there is a new node, its initial key and node_id are inserted into parent
 //  if (np2)
 //  {
-//    BOOST_ASSERT(insert_iter.m_node->parent()->node_id() \
-//      == insert_iter.m_node->parent_node_id()); // max_cache_size logic OK?
 //    m_branch_insert(insert_iter.m_node->parent(),
 //      insert_iter.m_node->parent_element(),
 //      key(*np2->leaf().begin()), np2->node_id());
