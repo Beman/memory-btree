@@ -690,6 +690,10 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
     {
       insert_begin = new_node->begin() + (insert_begin - old_node->end());
       insert_node = new_node;
+
+      // update old_np's parent pointers
+      old_np->parent_node(insert_node);
+      old_np->parent_element(insert_begin);
     }
   }
 
@@ -708,6 +712,10 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
   insert_begin->second = k;
   (insert_begin+1)->first = new_np;
   ++insert_node->_size;
+
+  // update new_np's parent pointers
+  new_np->parent_node(insert_node);
+  new_np->parent_element(insert_begin+1);
 
 std::cout << "*****branch insert done" << std::endl;
 }
