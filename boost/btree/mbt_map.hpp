@@ -177,10 +177,10 @@ namespace btree {
     typedef std::pair<Key, T>      leaf_value;
     typedef std::pair<node*, Key>  branch_value;  // first is pointer to child node
 
-    static Key& key(leaf_value& v) {return v.first;}
-    static Key& key(branch_value& v) {return v.second;}
-    static T& mapped_value(leaf_value& v) {return v.second;}
-    static node*& mapped_value(branch_value& v) {return v.first;}
+//    static Key& key(leaf_value& v) {return v.first;}
+//    static Key& key(branch_value& v) {return v.second;}
+//    static T& mapped_value(leaf_value& v) {return v.second;}
+//    static node*& mapped_value(branch_value& v) {return v.first;}
 
     //----------------------------------------------------------------------------------//
     //                             private nested classes                               //
@@ -257,7 +257,7 @@ namespace btree {
 
       leaf_node*     next_node();  // returns next leaf node; root node if end
 
-      static std::size_t max_size(const mbt_map& m) {return m.m_max_leaf_size;}
+//      static std::size_t max_size(const mbt_map& m) {return m.m_max_leaf_size;}
      };
 
     //-----------------------------  class branch_node  --------------------------------//
@@ -277,7 +277,7 @@ namespace btree {
 
       branch_node*   next_node();  // returns next node at same height; root node if end
 
-      static std::size_t max_size(const mbt_map& m) {return m.m_max_branch_size;}
+//      static std::size_t max_size(const mbt_map& m) {return m.m_max_branch_size;}
     };
 
     //----------------------------------------------------------------------------------//
@@ -361,25 +361,30 @@ namespace btree {
       m_size = 0;
       m_max_leaf_size = node_sz / sizeof(leaf_value);
       m_max_branch_size = node_sz / sizeof(branch_value);
-      m_root = m_new_node<leaf_node>(0U);
+      m_root = m_new_node<leaf_node>(0U, m_max_leaf_size);
       m_root->owner(this);
     }
 
     template <class Node>
-    Node* m_new_node(uint16_t height_);
+    Node* m_new_node(uint16_t height_, size_type max_elements);
 
     void  m_new_root();
 
     iterator m_special_lower_bound(const key_type& k) const;
 
-    template <class Node>
-    void m_insert(const key_type& k, const typename Node::mapped_type& mv,
-                  Node*& np, typename Node::value_type*& ep);
-    // Requires: np points to the node where insertion is to occur
+    void m_leaf_insert(const key_type& k, const mapped_type& mv,
+                  leaf_node*& np, leaf_value*& ep);
+    // Remarks:  np points to the node where insertion is to occur
     //           ep points to the element where insertion is to occur
     // Effects:  Inserts k and mv at *ep. If the insertion causes a node to be split,
     //           and the ep falls on the newly split node, np and ep are set to point to
     //           the new node and appropriate element
+
+    void m_branch_insert(key_type&& k, node* old_np, node* new_np);
+    // Effects:  inserts k and new_np at old_np->parent_element()->second and
+    //           (old_np->parent_element()+1)->first, respectively
+    // Postcondition: For the nodes pointed to by old_np and new_np, parent_node() and
+    //           parent_element() are valid. i.e. updated if needed
 
     static leaf_node* leaf_cast(node* np)     {return reinterpret_cast<leaf_node*>(np);}
     static branch_node* branch_cast(node* np) {return reinterpret_cast<branch_node*>(np);}
@@ -405,10 +410,10 @@ template <class Key, class T, class Compare, class Allocator>
 template <class Node>
 Node*
 mbt_map<Key,T,Compare,Allocator>::
-m_new_node(uint16_t height_)
+m_new_node(uint16_t height_, size_type max_elements)
 {
-  std::size_t node_size = sizeof(Node) - sizeof(typename Node::value_type) +
-    Node::max_size(*this);
+  std::size_t node_size = sizeof(Node)
+    + (max_elements-1) * sizeof(typename Node::value_type);
 
   Node* np = reinterpret_cast<Node*>(new char[node_size]);
 #ifndef NDEBUG
@@ -491,13 +496,16 @@ void
 mbt_map<Key,T,Compare,Allocator>::
 m_new_root()
 {
+  std::cout << "***adding new root\n";
   // create a new root containing only the end pseudo-element
   node* old_root = m_root;
-  m_root = m_new_node<branch_node>(old_root->height()+1);
-  m_root->begin()->first = old_root;
-  m_root->owner(this);
-  old_root->parent_node(m_root);
-  old_root->parent_element(m_root->begin());
+  branch_node* new_root
+    = m_new_node<branch_node>(old_root->height()+1, m_max_branch_size);
+  new_root->begin()->first = old_root;
+  new_root->owner(this);
+  old_root->parent_node(new_root);
+  old_root->parent_element(new_root->begin());
+  m_root = new_root;
 }
 
 //-----------------------------------  insert()  ---------------------------------------//
@@ -509,9 +517,9 @@ insert(const value_type& x)
 {
   iterator insert_point = m_special_lower_bound(x.first);
 
-  std::cout << "***" << (insert_point.m_element == insert_point.m_node->end())
-  << (key_comp()(x.first, insert_point->first))
-  << (key_comp()(insert_point->first, x.first)) << std::endl;
+//  std::cout << "***" << (insert_point.m_element == insert_point.m_node->end())
+//  << (key_comp()(x.first, insert_point->first))
+//  << (key_comp()(insert_point->first, x.first)) << std::endl;
 
   bool unique = insert_point.m_element == insert_point.m_node->end()
          || key_comp()(x.first, insert_point->first)
@@ -520,40 +528,38 @@ insert(const value_type& x)
   if (!unique)
     return std::pair<iterator, bool>(insert_point, false);
 
-  m_insert(x.first, x.second, insert_point.m_node, insert_point.m_element);
+  m_leaf_insert(x.first, x.second, insert_point.m_node, insert_point.m_element);
   return std::pair<iterator, bool>(insert_point, true);
 }
 
-//----------------------------------  m_insert()  --------------------------------------//
+//-------------------------------  m_leaf_insert()  ------------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>
-template <class Node>
 void
 mbt_map<Key,T,Compare,Allocator>::
-m_insert(const key_type& k, const typename Node::mapped_type& mv,
-              Node*& np_, typename Node::value_type*& ep_)
-// Requires: np points to the node where insertion is to occur
-//           ep points to the element where insertion is to occur
-// Effects:  Inserts k and v at *ep. If the insertion causes a node to be split,
-//           and the ep falls on the newly split node, np and ep are set to point to
-//           the new node and appropriate element
-
+m_leaf_insert(const key_type& k, const mapped_type& mv,
+              leaf_node*& old_node, leaf_value*& ep)
+    // Requires: old_node points to the node where insertion is to occur
+    //           ep points to the element where insertion is to occur
+    // Effects:  Inserts k and mv at *ep. If the insertion causes a node to be split,
+    //           and the ep falls on the newly split node, old_node and ep are set to
+    //           point to the new node and appropriate element
 {
+  leaf_node*   np = old_node;
+  leaf_value*  insert_begin = ep;
+  leaf_node*   new_node = 0;
 
-  Node*                       np = np_;
-  typename Node::value_type*  insert_begin = ep_;
-  Node*                       np2 = 0;
+  BOOST_ASSERT_MSG(np->size() <= m_max_leaf_size, "internal error");
 
-//  BOOST_ASSERT_MSG(np->is_leaf(), "internal error");
-//  BOOST_ASSERT_MSG(np->size() <= m_max_leaf_size, "internal error");
-//
-//  if (np->size() == m_max_leaf_size)  // if no room on node, node must be split
-//  {
-//    if (np->is_root()) // splitting the root?
-//      m_new_root();  // create a new root
-//
-//    np2 = m_new_node(np->height());  // create the new node
-//
+
+  if (np->size() == m_max_leaf_size)  // if no room on node, node must be split
+  {
+    std::cout << "***splitting a leaf\n";
+    if (np->is_root()) // splitting the root?
+      m_new_root();  // create a new root
+
+    new_node = m_new_node<leaf_node>(np->height(), m_max_leaf_size);  // create the new node
+
 //    // ck pack conditions now, since leaf seq list update may chg header().last_node_id()
 //    if (m_ok_to_pack
 //        && (insert_begin != np->leaf().end() || np->node_id() != header().last_node_id()))
@@ -562,33 +568,33 @@ m_insert(const key_type& k, const typename Node::mapped_type& mv,
 //    // apply pack optimization if applicable
 //    if (m_ok_to_pack)  // have all inserts been ordered and no erases occurred?
 //    {
-//      // pack optimization: instead of splitting np, just put value alone on np2
-//      m_memcpy_value(&*np2->leaf().begin(), &key_, key_size, &mapped_value_, mapped_size);  // insert value
-//      np2->size(value_size);
+//      // pack optimization: instead of splitting np, just put value alone on new_node
+//      m_memcpy_value(&*new_node->leaf().begin(), &key_, key_size, &mapped_value_, mapped_size);  // insert value
+//      new_node->size(value_size);
 //      BOOST_ASSERT(np->parent()->node_id() == np->parent_node_id()); // max_cache_size logic OK?
 //      m_branch_insert(np->parent(), np->parent_element(),
-//        key(*np2->leaf().begin()), np2->node_id());
+//        key(*new_node->leaf().begin()), new_node->node_id());
 //      ++m_size;
-//      return const_iterator(np2, np2->leaf().begin());
+//      return const_iterator(new_node, new_node->leaf().begin());
 //    }
-//
-//    // split node np by moving half the elements to node np2
-//    np2->size(np->size() / 2);  // round down to minimize move size
-//    np->size(np->size() - np2->size());
-//    std::move(np->begin() + np->size(), np->end(), np2->begin());
-//
-//    // TODO: if the insert point will fall on the new node, it would be faster to
-//    // copy the portion before the insert point, copy the value being inserted, and
-//    // finally copy the portion after the insert point. However, that's a fair amount of
-//    // additional code for something that only happens on half of all leaf splits on average.
-//
-//    // adjust np and insert_begin if they now fall on the new node due to the split
-//    if (np->end() <= insert_begin)
-//    {
-//      insert_begin = np2->begin() + (insert_begin - np->end());
-//      np = np2;
-//    }
-//  }
+
+    // split node np by moving half the elements to node new_node
+    new_node->size(np->size() / 2);  // round down to minimize move size
+    std::move(np->end() - new_node->size(), np->end(), new_node->begin());
+    np->size(np->size() - new_node->size());
+
+    // TODO: if the insert point will fall on the new node, it would be faster to
+    // copy the portion before the insert point, copy the value being inserted, and
+    // finally copy the portion after the insert point. However, that's a fair amount of
+    // additional code for something that only happens on half of all leaf splits on average.
+
+    // adjust np and insert_begin if they now fall on the new node due to the split
+    if (np->end() <= insert_begin)
+    {
+      insert_begin = new_node->begin() + (insert_begin - np->end());
+      np = new_node;
+    }
+  }
 
   BOOST_ASSERT(insert_begin >= np->begin());
   BOOST_ASSERT(insert_begin <= np->end());
@@ -597,20 +603,113 @@ m_insert(const key_type& k, const typename Node::mapped_type& mv,
   std::move_backward(insert_begin, np->end(), np->end()+1);
 
   //  insert x at insert_begin
-  key(*insert_begin) = k;
-  mapped_value(*insert_begin) = mv;
+  insert_begin->first = k;
+  insert_begin->second = mv;
   ++np->_size;
   ++m_size;
 
-//  // if there is a new node, its initial key and node_id are inserted into parent
-//  if (np2)
-//  {
-//    m_branch_insert(insert_iter.m_node->parent(),
-//      insert_iter.m_node->parent_element(),
-//      key(*np2->leaf().begin()), np2->node_id());
-//  }
+  // if there is a new node, its initial key and leaf_node* are inserted into parent
+  if (new_node)
+  {
+    m_branch_insert(std::move(new_node->begin()->first), old_node, new_node);
+
+    // if the insert point changed, update the caller's pointers
+    if (ep != insert_begin)
+    {
+      old_node = np;
+      ep = insert_begin;
+    }
+  }
 
 //std::cout << "***insert done" << std::endl;
+}
+
+//-------------------------------  m_branch_insert()  ----------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+void
+mbt_map<Key,T,Compare,Allocator>::
+m_branch_insert(key_type&& k, node* old_np, node* new_np)
+    // Effects:  inserts k and new_np at old_np->parent_element()->second and
+    //           (old_np->parent_element()+1)->first, respectively
+    // Postcondition: For the nodes pointed to by old_np and new_np, parent_node() and
+    //           parent_element() are valid. i.e. updated if needed
+{
+  branch_node*   old_node = old_np->parent_node();
+  branch_node*   insert_node = old_node;
+  branch_value*  insert_begin = old_np->parent_element();
+  branch_node*   new_node = 0;
+
+  std::cout << "*****branch insert, height=" << old_node->height() << "\n";
+
+  BOOST_ASSERT_MSG(old_node->size() <= m_max_branch_size, "internal error");
+
+
+  if (old_node->size() == m_max_branch_size)  // if no room on node, node must be split
+  {
+    if (old_node->is_root()) // splitting the root?
+      m_new_root();  // create a new root
+
+    new_node = m_new_node<branch_node>(old_node->height(), m_max_branch_size);
+
+//    // ck pack conditions now, since leaf seq list update may chg header().last_node_id()
+//    if (m_ok_to_pack
+//        && (insert_begin != old_node->leaf().end() || old_node->node_id() != header().last_node_id()))
+//      m_ok_to_pack = false;  // conditions for pack optimization not met
+//
+//    // apply pack optimization if applicable
+//    if (m_ok_to_pack)  // have all inserts been ordered and no erases occurred?
+//    {
+//      // pack optimization: instead of splitting old_node, just put value alone on old_node2
+//      m_memcpy_value(&*old_node2->leaf().begin(), &key_, key_size, &mapped_value_, mapped_size);  // insert value
+//      old_node2->size(value_size);
+//      BOOST_ASSERT(old_node->parent()->node_id() == old_node->parent_node_id()); // max_cache_size logic OK?
+//      m_branch_insert(old_node->parent(), old_node->parent_element(),
+//        key(*old_node2->leaf().begin()), old_node2->node_id());
+//      ++m_size;
+//      return const_iterator(old_node2, old_node2->leaf().begin());
+//    }
+
+    // split node old_node by moving half the elements to node new_node
+    new_node->size(old_node->size() / 2);  // round down to minimize move size
+    std::move(old_node->end() - new_node->size(), old_node->end(), new_node->begin());
+    new_node->end()->first = old_node->end()->first; // copy the end pseudo-element
+    old_node->size(old_node->size() - (new_node->size()+1));
+
+    // Do the promotion now, since old_node->end().second is the key that needs to be promoted
+    // regardless of which node the insert occurs on.
+    m_branch_insert(std::move(old_node->end()->second), old_node, new_node);
+
+    // TODO: if the insert point will fall on the new node, it would be faster to
+    // move the portion before the insert point, copy the value being inserted, and
+    // finally move the portion after the insert point. However, that's a fair amount of
+    // additional code for something that only happens on half of branch splits on average.
+
+    // adjust old_node and insert_begin if they now fall on the new node due to the split
+    if (old_node->end() <= insert_begin)
+    {
+      insert_begin = new_node->begin() + (insert_begin - old_node->end());
+      insert_node = new_node;
+    }
+  }
+
+  BOOST_ASSERT(insert_begin >= insert_node->begin());
+  BOOST_ASSERT(insert_begin <= insert_node->end());
+
+  // make room for insert
+  if (insert_begin != insert_node->end())
+  {
+    (insert_node->end()+1)->first = insert_node->end()->first;  // end pseudo-element
+    std::move_backward(insert_begin+1, insert_node->end(), insert_node->end()+1);
+    (insert_begin+1)->second = std::move(insert_begin->second);  // key
+  }
+
+  //  insert x
+  insert_begin->second = k;
+  (insert_begin+1)->first = new_np;
+  ++insert_node->_size;
+
+std::cout << "*****branch insert done" << std::endl;
 }
 
 //------------------------------  leaf_node::next_node()  ------------------------------//

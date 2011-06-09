@@ -23,7 +23,7 @@ int cpp_main(int, char*[])
 
   cout << "construction test" << endl;
 
-  map bt;
+  map bt(48);
 
   BOOST_TEST_EQ(bt.size(), 0U);
 
@@ -76,6 +76,14 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(it->second, 300);
   ++it;
   BOOST_TEST(it == bt.end());
+
+  cout << "insert 20 test" << endl;
+
+  for (int i = 40; i > 3; --i)
+    bt.insert(std::make_pair(i, i*100));
+
+  for (map::const_iterator itr = bt.begin(); itr != bt.end(); ++itr)
+    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
 
   return report_errors();
 }
