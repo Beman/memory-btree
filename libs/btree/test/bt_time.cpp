@@ -1,15 +1,13 @@
 //  bt_time.cpp  -----------------------------------------------------------------------//
 
-//  Copyright Beman Dawes 1994, 2010
+//  Copyright Beman Dawes 1994, 2010, 2011
 
 //  Distributed under the Boost Software License, Version 1.0.
 //  http://www.boost.org/LICENSE_1_0.txt
 
 //  See http://www.boost.org/libs/btree for documentation.
 
-#include <boost/btree/map.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/random.hpp>
+#include <boost/btree/mbt_map.hpp>
 #include <boost/btree/support/timer.hpp>
 #include <boost/detail/lightweight_main.hpp>
 
@@ -20,7 +18,6 @@
 #include <map>
 
 using namespace boost;
-namespace fs = boost::filesystem;
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -86,7 +83,7 @@ namespace
         for (long i = 1; i <= n; ++i)
         {
           if (lg && i % lg == 0)
-            std::cout << i << std::endl; 
+            std::cout << i << std::endl;
           bt.emplace(key(), i);
         }
         insert_tm = t.stop();
@@ -138,7 +135,7 @@ namespace
             throw std::runtime_error("btree find() returned end()");
           if (itr->key() != k)
             throw std::runtime_error("btree find() returned wrong iterator");
-#       endif 
+#       endif
         }
         find_tm = t.stop();
         t.report();
@@ -180,7 +177,7 @@ namespace
         for (long i = 1; i <= n; ++i)
         {
           if (lg && i % lg == 0)
-            std::cout << i << std::endl; 
+            std::cout << i << std::endl;
           //long k = key();
           //if (i >= n - 5)
           //{
@@ -220,7 +217,7 @@ namespace
       for (long i = 1; i <= n; ++i)
       {
         if (lg && i % lg == 0)
-          std::cout << i << std::endl; 
+          std::cout << i << std::endl;
         stl_type::value_type element(key(), i);
         stl.insert(element);
       }
@@ -228,18 +225,18 @@ namespace
       t.report();
       if (html)
       {
-        cerr << "<tr>\n  <td><code>" << command_args << "</code></td>\n";  
+        cerr << "<tr>\n  <td><code>" << command_args << "</code></td>\n";
         cerr.setf(std::ios_base::fixed, std::ios_base::floatfield);
         cerr.precision(places);
         if (this_tm.wall)
         {
           double ratio = (insert_tm.wall * 1.0) / this_tm.wall;
           if (ratio < 1.0)
-            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">" 
+            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
                  << insert_tm.wall / sec << " sec<br>"
                  << ratio << " ratio</td>\n";
           else
-            cerr << "  <td align=\"right\">" 
+            cerr << "  <td align=\"right\">"
                  << insert_tm.wall / sec << " sec<br>"
                  << ratio << " ratio</td>\n";
         }
@@ -262,7 +259,7 @@ namespace
       for (long i = 1; i <= n; ++i)
       {
         if (lg && i % lg == 0)
-          std::cout << i << std::endl; 
+          std::cout << i << std::endl;
           k = key();
           itr = stl.find(k);
 #       if !defined(NDEBUG)
@@ -280,11 +277,11 @@ namespace
         {
           double ratio = (find_tm.wall * 1.0) / this_tm.wall;
           if (ratio < 1.0)
-            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">" 
+            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
                  << find_tm.wall / sec << " sec<br>"
                  << ratio << " ratio</td>\n";
           else
-            cerr << "  <td align=\"right\">" 
+            cerr << "  <td align=\"right\">"
                  << find_tm.wall / sec << " sec<br>"
                  << ratio << " ratio</td>\n";
         }
@@ -320,11 +317,11 @@ namespace
         {
           double ratio = (iterate_tm.wall * 1.0) / this_tm.wall;
           if (ratio < 1.0)
-            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">" 
+            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
                  << iterate_tm.wall / sec << " sec<br>"
                  << ratio << " ratio</td>\n";
           else
-            cerr << "  <td align=\"right\">" 
+            cerr << "  <td align=\"right\">"
                  << iterate_tm.wall / sec << " sec<br>"
                  << ratio << " ratio</td>\n";
         }
@@ -347,7 +344,7 @@ namespace
       for (long i = 1; i <= n; ++i)
       {
         if (lg && i % lg == 0)
-          std::cout << i << std::endl; 
+          std::cout << i << std::endl;
         stl.erase(key());
       }
       this_tm = t.stop();
@@ -358,11 +355,11 @@ namespace
         {
           double ratio = (erase_tm.wall * 1.0) / this_tm.wall;
           if (ratio < 1.0)
-            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">" 
+            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
                  << erase_tm.wall / sec << " sec<br>"
                  << ratio << " ratio</td>\n</tr>\n";
           else
-            cerr << "  <td align=\"right\">" 
+            cerr << "  <td align=\"right\">"
                  << erase_tm.wall / sec << " sec<br>"
                  << ratio << " ratio</td>\n</tr>\n";
         }
@@ -384,7 +381,7 @@ namespace
 
 //-------------------------------------- main()  ---------------------------------------//
 
-int cpp_main(int argc, char * argv[]) 
+int cpp_main(int argc, char * argv[])
 {
   for (int a = 0; a < argc; ++a)
   {
@@ -398,7 +395,7 @@ int cpp_main(int argc, char * argv[])
   if (argc >=2)
     n = std::atol(argv[1]);
 
-  for (; argc > 2; ++argv, --argc) 
+  for (; argc > 2; ++argv, --argc)
   {
     if (*argv[2] != '-')
       path = argv[2];
@@ -450,7 +447,7 @@ int cpp_main(int argc, char * argv[])
     }
   }
 
-  if (argc < 2) 
+  if (argc < 2)
   {
     cout << "Usage: bt_time n [Options]\n"
       " The argument n specifies the number of test cases to run\n"
