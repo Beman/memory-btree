@@ -496,7 +496,7 @@ void
 mbt_map<Key,T,Compare,Allocator>::
 m_new_root()
 {
-  std::cout << "***adding new root\n";
+  //std::cout << "***adding new root\n";
   // create a new root containing only the end pseudo-element
   node* old_root = m_root;
   branch_node* new_root
@@ -554,7 +554,7 @@ m_leaf_insert(const key_type& k, const mapped_type& mv,
 
   if (np->size() == m_max_leaf_size)  // if no room on node, node must be split
   {
-    std::cout << "***splitting a leaf\n";
+    //std::cout << "***splitting a leaf\n";
     if (np->is_root()) // splitting the root?
       m_new_root();  // create a new root
 
@@ -589,8 +589,11 @@ m_leaf_insert(const key_type& k, const mapped_type& mv,
     // additional code for something that only happens on half of all leaf splits on average.
 
     // adjust np and insert_begin if they now fall on the new node due to the split
-    if (np->end() <= insert_begin)
+    if (insert_begin > np->end())
     {
+      BOOST_ASSERT((insert_begin-np->end()) >= 0);  // ck offset validity
+      BOOST_ASSERT((insert_begin-np->end()) <= new_node->size());
+
       insert_begin = new_node->begin() + (insert_begin - np->end());
       np = new_node;
     }
@@ -640,7 +643,7 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
   branch_value*  insert_begin = old_np->parent_element();
   branch_node*   new_node = 0;
 
-  std::cout << "*****branch insert, height=" << old_node->height() << "\n";
+  //std::cout << "*****branch insert, height=" << old_node->height() << "\n";
 
   BOOST_ASSERT_MSG(old_node->size() <= m_max_branch_size, "internal error");
 
@@ -671,10 +674,13 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
 //    }
 
     // split node old_node by moving half the elements to node new_node
+//    cout << "\nold_node->size()=" << old_node->size() << '\n';
     new_node->size(old_node->size() / 2);  // round down to minimize move size
+//    cout << "\nnew_node->size()=" << new_node->size() << '\n';
     std::move(old_node->end() - new_node->size(), old_node->end(), new_node->begin());
     new_node->end()->first = old_node->end()->first; // copy the end pseudo-element
     old_node->size(old_node->size() - (new_node->size()+1));
+//    cout << "\nupdated old_node->size()=" << old_node->size() << '\n';
 
     // Do the promotion now, since old_node->end().second is the key that needs to be promoted
     // regardless of which node the insert occurs on.
@@ -686,9 +692,13 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
     // additional code for something that only happens on half of branch splits on average.
 
     // adjust old_node and insert_begin if they now fall on the new node due to the split
-    if (old_node->end() <= insert_begin)
+    if (insert_begin > old_node->end())
     {
-      insert_begin = new_node->begin() + (insert_begin - old_node->end());
+//      cout << "\ninsert_begin offset=" << insert_begin - old_node->end() - 1 << endl;
+      BOOST_ASSERT((insert_begin-old_node->end()-1) >= 0);  // ck offset validity
+      BOOST_ASSERT((insert_begin-old_node->end()-1) <= new_node->size());
+
+      insert_begin = new_node->begin() + (insert_begin - old_node->end() - 1);
       insert_node = new_node;
 
       // update old_np's parent pointers
@@ -717,7 +727,7 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
   new_np->parent_node(insert_node);
   new_np->parent_element(insert_begin+1);
 
-std::cout << "*****branch insert done" << std::endl;
+  //std::cout << "*****branch insert done" << std::endl;
 }
 
 //------------------------------  leaf_node::next_node()  ------------------------------//
