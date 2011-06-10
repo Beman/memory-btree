@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="stl_test" />
+		<Option pch_mode="2" />
+		<Option compiler="mingw_460" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin\Debug\stl_test" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj\Debug\" />
+				<Option type="1" />
+				<Option compiler="mingw_460" />
+				<Option parameters="-v" />
+				<Compiler>
+					<Add option="-std=c++0x" />
+					<Add option="-w" />
+					<Add option="-g" />
+					<Add directory="..\..\..\..\..\..\trunk" />
+					<Add directory="..\..\..\..\..\..\btree-in-memory" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin\Release\stl_test" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj\Release\" />
+				<Option type="1" />
+				<Option compiler="mingw_460" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-std=c++0x" />
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="..\..\stl_test.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
