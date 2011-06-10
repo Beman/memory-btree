@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="btree-in-memory">
+		<Project filename="stl_test/stl_test.cbp" />
+		<Project filename="bt_time/bt_time.cbp" />
+		<Project filename="support_dll/support_dll.cbp" />
+		<Project filename="smoke_test/smoke_test.cbp" active="1" />
+	</Workspace>
+</CodeBlocks_workspace_file>
