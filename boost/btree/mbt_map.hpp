@@ -190,11 +190,6 @@ namespace btree {
     typedef std::pair<Key, T>      leaf_value;
     typedef std::pair<node*, Key>  branch_value;  // first is pointer to child node
 
-//    static Key& key(leaf_value& v) {return v.first;}
-//    static Key& key(branch_value& v) {return v.second;}
-//    static T& mapped_value(leaf_value& v) {return v.second;}
-//    static node*& mapped_value(branch_value& v) {return v.first;}
-
     //----------------------------------------------------------------------------------//
     //                             private nested classes                               //
     //----------------------------------------------------------------------------------//
@@ -269,8 +264,6 @@ namespace btree {
       leaf_value*    end()                          {return _leaf_values + node::_size;}
 
       leaf_node*     next_node();  // returns next leaf node; root node if end
-
-//      static std::size_t max_size(const mbt_map& m) {return m.m_max_leaf_size;}
      };
 
     //-----------------------------  class branch_node  --------------------------------//
@@ -289,8 +282,6 @@ namespace btree {
       // child pointers - see your favorite computer science textbook.
 
       branch_node*   next_node();  // returns next node at same height; root node if end
-
-//      static std::size_t max_size(const mbt_map& m) {return m.m_max_branch_size;}
     };
 
     //----------------------------------------------------------------------------------//
