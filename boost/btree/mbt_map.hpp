@@ -762,10 +762,10 @@ lower_bound(const key_type& k)
     BOOST_ASSERT(empty());
     return end();
   }
-std::cout << "point 1\n";
+
   // lower bound is first element on next node
   leaf_node* np = low.m_node->next_node();
-  return np == m_root ? iterator(np, np->begin()) : end();
+  return !np->is_root() ? iterator(np, np->begin()) : end();
 }
 
 //------------------------------------- find() -----------------------------------------//

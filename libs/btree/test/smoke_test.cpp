@@ -99,8 +99,6 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(bt.lower_bound(1)->first, 1);
   BOOST_TEST_EQ(bt.lower_bound(20)->first, 20);
   BOOST_TEST_EQ(bt.lower_bound(40)->first, 40);
-  map::iterator ix =bt.lower_bound(41);
-  std::cout << "***" << ix.m_node << " " << ix.m_element << std::endl;
   BOOST_TEST(bt.lower_bound(41)==bt.end());
 
   return report_errors();
