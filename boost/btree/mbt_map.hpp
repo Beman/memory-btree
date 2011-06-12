@@ -1,14 +1,27 @@
 #ifndef BOOST_MBT_MAP_HPP
 #define BOOST_MBT_MAP_HPP
 
+#define BOOST_NOEXCEPT
+
+#include <boost/config/warning_disable.hpp>
+#include <boost/config.hpp>
+
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable: 4996)  // ... Function call with parameters that may be unsafe
+#endif
+
 #include <cstddef>
+#include <functional>
 #include <utility>
 #include <memory>
 #include <iterator>
 #include <algorithm>
+#include <boost/cstdint.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/assert.hpp>
 #include <cstring>  // for memset
+
 
 /*
 TODO:
@@ -101,26 +114,26 @@ namespace btree {
     mbt_map<Key,T,Compare,Allocator>&
       operator=(mbt_map<Key,T,Compare,Allocator>&& x);
 //    mbt_map& operator=(initializer_list<value_type>);
-    allocator_type get_allocator() const noexcept;
+    allocator_type get_allocator() const BOOST_NOEXCEPT;
 
     // iterators:
-    iterator                begin() noexcept           {return m_begin();}
-    const_iterator          begin() const noexcept     {return m_begin();}
-    iterator                end() noexcept             {return iterator(this);}
-    const_iterator          end() const noexcept       {return const_iterator(this);}
-    reverse_iterator        rbegin() noexcept;
-    const_reverse_iterator  rbegin() const noexcept;
-    reverse_iterator        rend() noexcept;
-    const_reverse_iterator  rend() const noexcept;
-    const_iterator          cbegin() const noexcept    {return m_begin();}
-    const_iterator          cend() const noexcept      {return const_iterator(this);}
-    const_reverse_iterator  crbegin() const noexcept;
-    const_reverse_iterator  crend() const noexcept;
+    iterator                begin() BOOST_NOEXCEPT           {return m_begin();}
+    const_iterator          begin() const BOOST_NOEXCEPT     {return m_begin();}
+    iterator                end() BOOST_NOEXCEPT             {return iterator(this);}
+    const_iterator          end() const BOOST_NOEXCEPT       {return const_iterator(this);}
+    reverse_iterator        rbegin() BOOST_NOEXCEPT;
+    const_reverse_iterator  rbegin() const BOOST_NOEXCEPT;
+    reverse_iterator        rend() BOOST_NOEXCEPT;
+    const_reverse_iterator  rend() const BOOST_NOEXCEPT;
+    const_iterator          cbegin() const BOOST_NOEXCEPT    {return m_begin();}
+    const_iterator          cend() const BOOST_NOEXCEPT      {return const_iterator(this);}
+    const_reverse_iterator  crbegin() const BOOST_NOEXCEPT;
+    const_reverse_iterator  crend() const BOOST_NOEXCEPT;
 
     // capacity:
-    bool                    empty() const noexcept     {return m_size == 0;}
-    size_type               size() const noexcept      {return m_size;}
-    size_type               max_size() const noexcept;
+    bool                    empty() const BOOST_NOEXCEPT     {return m_size == 0;}
+    size_type               size() const BOOST_NOEXCEPT      {return m_size;}
+    size_type               max_size() const BOOST_NOEXCEPT;
 
     // 23.4.4.3, element access:
     T&                      operator[](const key_type& x);
@@ -129,11 +142,11 @@ namespace btree {
     const T&                at(const key_type& x) const;
 
     // 23.4.4.4, modifiers:
-    template <class... Args>
-      std::pair<iterator, bool>
-                            emplace(Args&&... args);
-    template <class... Args>
-      iterator              emplace_hint(const_iterator position, Args&&... args);
+    //template <class... Args>
+    //  std::pair<iterator, bool>
+    //                        emplace(Args&&... args);
+    //template <class... Args>
+    //  iterator              emplace_hint(const_iterator position, Args&&... args);
 
     std::pair<iterator, bool>
                             insert(const value_type& x);
@@ -151,7 +164,7 @@ namespace btree {
     size_type               erase(const key_type& x);
     iterator                erase(const_iterator first, const_iterator last);
     void                    swap(mbt_map<Key,T,Compare,Allocator>&);
-    void                    clear() noexcept;
+    void                    clear() BOOST_NOEXCEPT;
 
     // observers:
     key_compare             key_comp() const   {return m_key_compare;}
@@ -162,7 +175,8 @@ namespace btree {
     const_iterator          find(const key_type& x) const;
     size_type               count(const key_type& x) const;
     iterator                lower_bound(const key_type& x);
-    const_iterator          lower_bound(const key_type& x) const;
+    const_iterator          lower_bound(const key_type& x) const
+                                      {return const_cast<mbt_map*>(this)->lower_bound(x);}
     iterator                upper_bound(const key_type& x);
     const_iterator          upper_bound(const key_type& x) const;
     std::pair<iterator,iterator>
@@ -247,8 +261,8 @@ namespace btree {
     class leaf_node : public node
     {
     public:
-      typedef mbt_map::leaf_value   value_type;
-      typedef mbt_map::mapped_type  mapped_type;
+      typedef typename mbt_map::leaf_value   value_type;
+      typedef typename mbt_map::mapped_type  mapped_type;
 
       leaf_value     _leaf_values[1];               // actual size determined at runtime
 
@@ -265,7 +279,7 @@ namespace btree {
     class branch_node : public node
     {
     public:
-      typedef mbt_map::branch_value  value_type;
+      typedef typename mbt_map::branch_value  value_type;
       typedef node*                  mapped_type;
 
       branch_value   _branch_values[1];             // actual size determined at runtime
@@ -305,7 +319,7 @@ namespace btree {
       iterator_type(iterator_type<VU> const& other)
         : m_node(other.m_node), m_element(other.m_element) {}
 
-    private:
+ //   private:
       iterator_type(mbt_map* owner)  // construct end iterator
         : m_node(0), m_owner(owner) {}
 
@@ -352,7 +366,7 @@ namespace btree {
     //                            private member functions                              //
     //----------------------------------------------------------------------------------//
 
-    iterator               m_begin() noexcept;
+    iterator               m_begin() BOOST_NOEXCEPT;
 
     branch_value_compare   branch_comp() const {return m_branch_value_compare;}
 
@@ -431,7 +445,7 @@ m_new_node(uint16_t height_, size_type max_elements)
 template <class Key, class T, class Compare, class Allocator>
 typename mbt_map<Key,T,Compare,Allocator>::iterator
 mbt_map<Key,T,Compare,Allocator>::
-m_begin() noexcept
+m_begin() BOOST_NOEXCEPT
 {
   if (empty())
     return end();
@@ -450,43 +464,6 @@ m_begin() noexcept
 
   leaf_node* lp = leaf_cast(bp);
   return iterator(lp, lp->begin());
-}
-
-//-----------------------------  m_special_lower_bound()  ------------------------------//
-
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
-m_special_lower_bound(const key_type& k) const
-{
-  branch_node* bp = branch_cast(m_root);
-
-  // search branches down the tree until a leaf is reached
-  while (bp->is_branch())
-  {
-    branch_value* low
-      = std::lower_bound(bp->begin(), bp->end(), k, branch_comp());
-
-    if ( /*(header().flags() & btree::flags::unique)
-      &&*/ low != bp->end()
-      && !key_comp()(k, low->second)) // if k isn't less that low key, low is equal
-      ++low;                         // and so must be incremented; this follows from
-                                     // the branch node invariant for unique containers
-
-    // create the child->parent list
-    node* child = low->first;
-    child->parent_node(bp);
-    child->parent_element(low);
-
-    bp = branch_cast(child);
-  }
-
-  //  search leaf
-  leaf_node* lp = leaf_cast(bp);
-  leaf_value* low
-    = std::lower_bound(lp->begin(), lp->end(), k, value_comp());
-
-  return iterator(lp, low);
 }
 
 //----------------------------------- m_new_root() -------------------------------------//
@@ -592,7 +569,7 @@ m_leaf_insert(const key_type& k, const mapped_type& mv,
     if (insert_begin > np->end())
     {
       BOOST_ASSERT((insert_begin-np->end()) >= 0);  // ck offset validity
-      BOOST_ASSERT((insert_begin-np->end()) <= new_node->size());
+      BOOST_ASSERT((insert_begin-np->end()) <= static_cast<std::ptrdiff_t>(new_node->size()));
 
       insert_begin = new_node->begin() + (insert_begin - np->end());
       np = new_node;
@@ -696,7 +673,7 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
     {
 //      cout << "\ninsert_begin offset=" << insert_begin - old_node->end() - 1 << endl;
       BOOST_ASSERT((insert_begin-old_node->end()-1) >= 0);  // ck offset validity
-      BOOST_ASSERT((insert_begin-old_node->end()-1) <= new_node->size());
+      BOOST_ASSERT((insert_begin-old_node->end()-1) <= static_cast<std::ptrdiff_t>(new_node->size()));
 
       insert_begin = new_node->begin() + (insert_begin - old_node->end() - 1);
       insert_node = new_node;
@@ -729,6 +706,80 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
 
   //std::cout << "*****branch insert done" << std::endl;
 }
+
+//-----------------------------  m_special_lower_bound()  ------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+typename mbt_map<Key,T,Compare,Allocator>::iterator
+mbt_map<Key,T,Compare,Allocator>::
+m_special_lower_bound(const key_type& k) const
+{
+  branch_node* bp = branch_cast(m_root);
+
+  // search branches down the tree until a leaf is reached
+  while (bp->is_branch())
+  {
+    branch_value* low
+      = std::lower_bound(bp->begin(), bp->end(), k, branch_comp());
+
+    if ( /*(header().flags() & btree::flags::unique)
+      &&*/ low != bp->end()
+      && !key_comp()(k, low->second)) // if k isn't less that low key, low is equal
+      ++low;                         // and so must be incremented; this follows from
+                                     // the branch node invariant for unique containers
+
+    // create the child->parent list
+    node* child = low->first;
+    child->parent_node(bp);
+    child->parent_element(low);
+
+    bp = branch_cast(child);
+  }
+
+  //  search leaf
+  leaf_node* lp = leaf_cast(bp);
+  leaf_value* low
+    = std::lower_bound(lp->begin(), lp->end(), k, value_comp());
+
+  return iterator(lp, low);
+}
+
+//---------------------------------- lower_bound() -------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+typename mbt_map<Key,T,Compare,Allocator>::iterator
+mbt_map<Key,T,Compare,Allocator>::
+lower_bound(const key_type& k)
+{
+
+  iterator low = m_special_lower_bound(k);
+
+  if (low.m_element != low.m_node->end())
+    return low;
+
+  if (low.m_node->begin() == low.m_node->end())
+  {
+    BOOST_ASSERT(empty());
+    return end();
+  }
+std::cout << "point 1\n";
+  // lower bound is first element on next node
+  leaf_node* np = low.m_node->next_node();
+  return np == m_root ? iterator(np, np->begin()) : end();
+}
+
+//------------------------------------- find() -----------------------------------------//
+
+//template <class Key, class Base, class Traits, class Comp>
+//typename btree_base<Key,Base,Traits,Comp>::const_iterator
+//btree_base<Key,Base,Traits,Comp>::find(const key_type& k) const
+//{
+//  BOOST_ASSERT_MSG(is_open(), "find() on unopen btree");
+//  const_iterator low = lower_bound(k);
+//  return (low != end() && !key_comp()(k, key(*low)))
+//    ? low
+//    : end();
+//}
 
 //------------------------------  leaf_node::next_node()  ------------------------------//
 
@@ -821,5 +872,9 @@ increment()
 
 }  // btree
 }  // boost
+
+#ifdef BOOST_MSVC
+#  pragma warning(pop)
+#endif
 
 #endif  // BOOST_MBT_MAP_HPP

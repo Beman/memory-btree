@@ -1,5 +1,13 @@
-#include <iostream>
+
+#include <boost/config/warning_disable.hpp>
 #include <boost/config.hpp>
+
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable: 4996)  // ... Function call with parameters that may be unsafe
+#endif
+
+#include <iostream>
 #include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/btree/mbt_map.hpp>
@@ -85,5 +93,19 @@ int cpp_main(int, char*[])
   for (map::const_iterator itr = bt.begin(); itr != bt.end(); ++itr)
     std::cout << "  " << itr->first << ", " << itr->second << std::endl;
 
+  cout << "lower_bound test" << endl;
+
+  BOOST_TEST_EQ(bt.lower_bound(0)->first, 1);
+  BOOST_TEST_EQ(bt.lower_bound(1)->first, 1);
+  BOOST_TEST_EQ(bt.lower_bound(20)->first, 20);
+  BOOST_TEST_EQ(bt.lower_bound(40)->first, 40);
+  map::iterator ix =bt.lower_bound(41);
+  std::cout << "***" << ix.m_node << " " << ix.m_element << std::endl;
+  BOOST_TEST(bt.lower_bound(41)==bt.end());
+
   return report_errors();
 }
+
+#ifdef BOOST_MSVC
+#  pragma warning(pop)
+#endif

@@ -3,7 +3,11 @@
 	<Workspace title="btree-in-memory">
 		<Project filename="stl_test/stl_test.cbp" />
 		<Project filename="bt_time/bt_time.cbp" />
-		<Project filename="support_dll/support_dll.cbp" />
+		<Project filename="support_dll/support_dll.cbp">
+			<Depends filename="system_dll/system_dll.cbp" />
+		</Project>
 		<Project filename="smoke_test/smoke_test.cbp" active="1" />
+		<Project filename="system_dll/system_dll.cbp" />
+		<Project filename="support_static/support_static.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>
