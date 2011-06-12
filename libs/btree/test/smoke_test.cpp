@@ -21,6 +21,8 @@ int cpp_main(int, char*[])
 {
   typedef btree::mbt_map<int, long> map;
 
+  cout << "type test" << endl;
+
   BOOST_TEST((is_same< map::key_type, int>::value));
   BOOST_TEST((is_same< map::mapped_type, long>::value));
   BOOST_TEST((is_same< map::value_type, std::pair<const int, long> >::value));
@@ -32,8 +34,15 @@ int cpp_main(int, char*[])
   cout << "construction test" << endl;
 
   map bt(48);
+  const map* const_bt = &bt;
 
   BOOST_TEST_EQ(bt.size(), 0U);
+  BOOST_TEST(bt.empty());
+  BOOST_TEST_EQ(const_bt->size(), 0U);
+  BOOST_TEST(const_bt->empty());
+  BOOST_TEST(bt.begin() == bt.end());
+  BOOST_TEST(const_bt->begin() == const_bt->end());
+  BOOST_TEST(bt.end() == const_bt->end());
 
   cout << "insertion test" << endl;
 
@@ -100,6 +109,28 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(bt.lower_bound(20)->first, 20);
   BOOST_TEST_EQ(bt.lower_bound(40)->first, 40);
   BOOST_TEST(bt.lower_bound(41)==bt.end());
+
+  cout << "const lower_bound test" << endl;
+
+  BOOST_TEST_EQ(const_bt->lower_bound(0)->first, 1);
+  BOOST_TEST_EQ(const_bt->lower_bound(1)->first, 1);
+  BOOST_TEST_EQ(const_bt->lower_bound(20)->first, 20);
+  BOOST_TEST_EQ(const_bt->lower_bound(40)->first, 40);
+  BOOST_TEST(const_bt->lower_bound(41)==const_bt->end());
+
+  cout << "find test" << endl;
+
+  BOOST_TEST(bt.find(0)==bt.end());
+  for (int i = 1; i < 41; ++i)
+    BOOST_TEST_EQ(bt.find(i)->first, i);
+  BOOST_TEST(bt.find(41)==bt.end());
+
+  cout << "const find test" << endl;
+
+  BOOST_TEST(const_bt->find(0)==const_bt->end());
+  for (int i = 1; i < 41; ++i)
+    BOOST_TEST_EQ(const_bt->find(i)->first, i);
+  BOOST_TEST(const_bt->find(41)==const_bt->end());
 
   return report_errors();
 }

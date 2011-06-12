@@ -118,7 +118,7 @@ namespace btree {
 
     // iterators:
     iterator                begin() BOOST_NOEXCEPT           {return m_begin();}
-    const_iterator          begin() const BOOST_NOEXCEPT     {return m_begin();}
+    const_iterator          begin() const BOOST_NOEXCEPT     {return const_cast<mbt_map*>(this)->m_begin();}
     iterator                end() BOOST_NOEXCEPT             {return iterator(this);}
     const_iterator          end() const BOOST_NOEXCEPT       {return const_iterator(this);}
     reverse_iterator        rbegin() BOOST_NOEXCEPT;
@@ -172,11 +172,10 @@ namespace btree {
 
     // 23.4.4.5, map operations:
     iterator                find(const key_type& x);
-    const_iterator          find(const key_type& x) const;
+    const_iterator          find(const key_type& x) const {return const_cast<mbt_map*>(this)->find(x);}
     size_type               count(const key_type& x) const;
     iterator                lower_bound(const key_type& x);
-    const_iterator          lower_bound(const key_type& x) const
-                                      {return const_cast<mbt_map*>(this)->lower_bound(x);}
+    const_iterator          lower_bound(const key_type& x) const {return const_cast<mbt_map*>(this)->lower_bound(x);}
     iterator                upper_bound(const key_type& x);
     const_iterator          upper_bound(const key_type& x) const;
     std::pair<iterator,iterator>
@@ -319,9 +318,11 @@ namespace btree {
       iterator_type(iterator_type<VU> const& other)
         : m_node(other.m_node), m_element(other.m_element) {}
 
- //   private:
+    private:
       iterator_type(mbt_map* owner)  // construct end iterator
         : m_node(0), m_owner(owner) {}
+      iterator_type(const mbt_map* owner)  // construct end iterator
+        : m_node(0), m_owner(const_cast<mbt_map*>(owner)) {}
 
       friend class boost::iterator_core_access;
       friend class mbt_map;
@@ -770,16 +771,16 @@ lower_bound(const key_type& k)
 
 //------------------------------------- find() -----------------------------------------//
 
-//template <class Key, class Base, class Traits, class Comp>
-//typename btree_base<Key,Base,Traits,Comp>::const_iterator
-//btree_base<Key,Base,Traits,Comp>::find(const key_type& k) const
-//{
-//  BOOST_ASSERT_MSG(is_open(), "find() on unopen btree");
-//  const_iterator low = lower_bound(k);
-//  return (low != end() && !key_comp()(k, key(*low)))
-//    ? low
-//    : end();
-//}
+template <class Key, class T, class Compare, class Allocator>
+typename mbt_map<Key,T,Compare,Allocator>::iterator
+mbt_map<Key,T,Compare,Allocator>::
+find(const key_type& k)
+{
+  iterator low = lower_bound(k);
+  return (low != end() && !key_comp()(k, low->first))
+    ? low
+    : end();
+}
 
 //------------------------------  leaf_node::next_node()  ------------------------------//
 

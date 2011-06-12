@@ -43,6 +43,7 @@ namespace
   bool do_erase (true);
   bool verbose (false);
   bool stl_tests (false);
+  bool ratio_btree_to_stl(true);
   bool html (false);
   const int places = 2;
 
@@ -51,6 +52,16 @@ namespace
   btree::times_t iterate_tm;
   btree::times_t erase_tm;
   const long double sec = 1000000.0L;
+
+  double ratio_of(btree::microsecond_t btree, btree::microsecond_t stl)
+  {
+    return ratio_btree_to_stl ? (btree*1.0L)/(stl*1.0L) : (stl*1.0L)/(btree*1.0L);
+  }
+
+  const char* ratio_type()
+  {
+    return ratio_btree_to_stl ? "ratio btree/stl" : "ratio stl/btree";
+  }
 
   template <class BT>
   void test()
@@ -80,7 +91,7 @@ namespace
           bt.insert(element);
         }
         insert_tm = t.stop();
-//        t.report();
+        t.report();
       }
 
 //      if (do_pack)
@@ -109,30 +120,30 @@ namespace
 //        bt.open(path, btree::flags::read_write);
 //        bt.max_cache_size(cache_sz);
 //      }
-//
-//      if (do_find)
-//      {
-//        cout << "\nfinding " << n << " btree elements..." << endl;
-//        rng.seed(seed);
-//        typename BT::const_iterator itr;
-//        long k;
-//        t.start();
-//        for (long i = 1; i <= n; ++i)
-//        {
-//          if (lg && i % lg == 0)
-//            std::cout << i << std::endl;
-//          k = key();
-//          itr = bt.find(k);
-//#       if !defined(NDEBUG)
-//          if (itr == bt.end())
-//            throw std::runtime_error("btree find() returned end()");
-//          if (itr->key() != k)
-//            throw std::runtime_error("btree find() returned wrong iterator");
-//#       endif
-//        }
-//        find_tm = t.stop();
-//        t.report();
-//      }
+
+      if (do_find)
+      {
+        cout << "\nfinding " << n << " btree elements..." << endl;
+        rng.seed(seed);
+        typename BT::const_iterator itr;
+        long k;
+        t.start();
+        for (long i = 1; i <= n; ++i)
+        {
+          if (lg && i % lg == 0)
+            std::cout << i << std::endl;
+          k = key();
+          itr = bt.find(k);
+#       if !defined(NDEBUG)
+          if (itr == bt.end())
+            throw std::runtime_error("btree find() returned end()");
+          if (itr->first != k)
+            throw std::runtime_error("btree find() returned wrong iterator");
+#       endif
+        }
+        find_tm = t.stop();
+        t.report();
+      }
 
       if (do_iterate)
       {
@@ -150,7 +161,7 @@ namespace
           prior_key = itr->first;
         }
         iterate_tm = t.stop();
-//        t.report();
+        t.report();
         if (count != bt.size())
           throw std::runtime_error("btree iteration count error");
       }
@@ -207,7 +218,7 @@ namespace
         stl.insert(element);
       }
       this_tm = t.stop();
-//      t.report();
+      t.report();
       if (html)
       {
         cerr << "<tr>\n  <td><code>" << command_args << "</code></td>\n";
@@ -215,7 +226,7 @@ namespace
         cerr.precision(places);
         if (this_tm.wall)
         {
-          double ratio = (insert_tm.wall * 1.0) / this_tm.wall;
+          double ratio = ratio_of(insert_tm.wall, this_tm.wall);
           if (ratio < 1.0)
             cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
                  << insert_tm.wall / sec << " sec<br>"
@@ -228,58 +239,58 @@ namespace
         else
           cerr << "  <td align=\"right\">N/A</td>\n";
       }
-      if (this_tm.wall)
-        cout << "  ratio of btree to stl wall clock time: "
-             << (insert_tm.wall * 1.0) / this_tm.wall << '\n';
-      if (verbose && this_tm.system + this_tm.user)
-        cout << "  ratio of btree to stl cpu time: "
-             << ((insert_tm.system + insert_tm.user) * 1.0)
-                / (this_tm.system + this_tm.user) << '\n';
+      if (insert_tm.wall && this_tm.wall)
+        cout << "  " << ratio_type() << " wall clock time: "
+             << ratio_of(insert_tm.wall, this_tm.wall) << '\n';
+      //if (verbose && this_tm.system + this_tm.user)
+      //  cout << "  " << ratio_type() << " cpu time: "
+      //       << ((insert_tm.system + insert_tm.user) * 1.0)
+      //          / (this_tm.system + this_tm.user) << '\n';
 
-//      cout << "\nfinding " << n << " std::map elements..." << endl;
-//      stl_type::const_iterator itr;
-//      long k;
-//      rng.seed(seed);
-//      t.start();
-//      for (long i = 1; i <= n; ++i)
-//      {
-//        if (lg && i % lg == 0)
-//          std::cout << i << std::endl;
-//          k = key();
-//          itr = stl.find(k);
-//#       if !defined(NDEBUG)
-//          if (itr == stl.end())
-//            throw std::runtime_error("stl find() returned end()");
-//          if (itr->first != k)
-//            throw std::runtime_error("stl find() returned wrong iterator");
-//#       endif
-//      }
-//      this_tm = t.stop();
-//      t.report();
-//      if (html)
-//      {
-//        if (this_tm.wall)
-//        {
-//          double ratio = (find_tm.wall * 1.0) / this_tm.wall;
-//          if (ratio < 1.0)
-//            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
-//                 << find_tm.wall / sec << " sec<br>"
-//                 << ratio << " ratio</td>\n";
-//          else
-//            cerr << "  <td align=\"right\">"
-//                 << find_tm.wall / sec << " sec<br>"
-//                 << ratio << " ratio</td>\n";
-//        }
-//        else
-//          cerr << "  <td align=\"right\">N/A</td>\n";
-//      }
-//      if (this_tm.wall)
-//        cout << "  ratio of btree to stl wall clock time: "
-//             << (find_tm.wall * 1.0) / this_tm.wall << '\n';
-//      if (verbose && this_tm.system + this_tm.user)
-//        cout << "  ratio of btree to stl cpu time: "
-//             << ((find_tm.system + find_tm.user) * 1.0)
-//                / (this_tm.system + this_tm.user) << '\n';
+      cout << "\nfinding " << n << " std::map elements..." << endl;
+      stl_type::const_iterator itr;
+      long k;
+      rng.seed(seed);
+      t.start();
+      for (long i = 1; i <= n; ++i)
+      {
+        if (lg && i % lg == 0)
+          std::cout << i << std::endl;
+          k = key();
+          itr = stl.find(k);
+#       if !defined(NDEBUG)
+          if (itr == stl.end())
+            throw std::runtime_error("stl find() returned end()");
+          if (itr->first != k)
+            throw std::runtime_error("stl find() returned wrong iterator");
+#       endif
+      }
+      this_tm = t.stop();
+      t.report();
+      if (html)
+      {
+        if (this_tm.wall)
+        {
+          double ratio = ratio_of(find_tm.wall, this_tm.wall);
+          if (ratio < 1.0)
+            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
+                 << find_tm.wall / sec << " sec<br>"
+                 << ratio << " ratio</td>\n";
+          else
+            cerr << "  <td align=\"right\">"
+                 << find_tm.wall / sec << " sec<br>"
+                 << ratio << " ratio</td>\n";
+        }
+        else
+          cerr << "  <td align=\"right\">N/A</td>\n";
+      }
+      if (find_tm.wall && this_tm.wall)
+        cout << "  " << ratio_type() << " wall clock time: "
+             << ratio_of(find_tm.wall, this_tm.wall) << '\n';
+      //if (verbose && this_tm.system + this_tm.user)
+      //  cout << "  " << ratio_type() << " cpu time: "
+      //       << ((find_tm.system + find_tm.user) * 1.0)
+      //          / (this_tm.system + this_tm.user) << '\n';
 
       cout << "\niterating over " << stl.size() << " stl elements..." << endl;
       unsigned long count = 0;
@@ -295,12 +306,12 @@ namespace
         prior_key = itr->first;
       }
       this_tm = t.stop();
-//      t.report();
+      t.report();
       if (html)
       {
         if (this_tm.wall)
         {
-          double ratio = (iterate_tm.wall * 1.0) / this_tm.wall;
+          double ratio = ratio_of(iterate_tm.wall, this_tm.wall);
           if (ratio < 1.0)
             cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
                  << iterate_tm.wall / sec << " sec<br>"
@@ -313,13 +324,13 @@ namespace
         else
           cerr << "  <td align=\"right\">N/A</td>\n";
       }
-      if (this_tm.wall)
-        cout << "  ratio of btree to stl wall clock time: "
-             << (iterate_tm.wall * 1.0) / this_tm.wall << '\n';
-      if (verbose && this_tm.system + this_tm.user)
-        cout << "  ratio of btree to stl cpu time: "
-             << ((iterate_tm.system + iterate_tm.user) * 1.0)
-                / (this_tm.system + this_tm.user) << '\n';
+      if (iterate_tm.wall && this_tm.wall)
+        cout << "  " << ratio_type() << " wall clock time: "
+             << ratio_of(iterate_tm.wall, this_tm.wall) << '\n';
+      //if (verbose && this_tm.system + this_tm.user)
+      //  cout << "  " << ratio_type() << " cpu time: "
+      //       << ((iterate_tm.system + iterate_tm.user) * 1.0)
+      //          / (this_tm.system + this_tm.user) << '\n';
       if (count != stl.size())
         throw std::runtime_error("stl iteration count error");
 
@@ -338,7 +349,7 @@ namespace
 //      {
 //        if (this_tm.wall)
 //        {
-//          double ratio = (erase_tm.wall * 1.0) / this_tm.wall;
+//          double ratio = ratio_of(erase_tm.wall, this_tm.wall);
 //          if (ratio < 1.0)
 //            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
 //                 << erase_tm.wall / sec << " sec<br>"
@@ -352,10 +363,10 @@ namespace
 //          cerr << "  <td align=\"right\">N/A</td>\n</tr>  <td align=\"right\">N/A</td>\n</tr>\n";
 //      }
 //      if (this_tm.wall)
-//        cout << "  ratio of btree to stl wall clock time: "
+//        cout << "  " << ratio_type() << " wall clock time: "
 //             << (erase_tm.wall * 1.0) / this_tm.wall << '\n';
 //      if (verbose && this_tm.system + this_tm.user)
-//        cout << "  ratio of btree to stl cpu time: "
+//        cout << "  " << ratio_type() << " cpu time: "
 //             << ((erase_tm.system + erase_tm.user) * 1.0)
 //                / (this_tm.system + this_tm.user) << '\n';
       cout << "STL timing complete" << endl;
@@ -393,6 +404,8 @@ int cpp_main(int argc, char * argv[])
       do_create = false;
       do_insert = false;
     }
+    else if ( std::strncmp( argv[2]+1, "rx", 2 )==0 )
+      ratio_btree_to_stl = false;
     else if ( std::strncmp( argv[2]+1, "stl", 3 )==0 )
       stl_tests = true;
     else if ( std::strncmp( argv[2]+1, "html", 4 )==0 )
@@ -437,6 +450,7 @@ int cpp_main(int argc, char * argv[])
       "   -k       Pack tree after insert test\n"
       "   -v       Verbose output statistics\n"
       "   -stl     Also run the tests against std::map\n"
+      "   -rx      Report ration as stl/btree instead of btree/stl\n" 
       "   -html    Output html table of results to cerr\n"
       ;
     return 1;
