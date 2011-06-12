@@ -3,6 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C++ Express 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smoke_test", "smoke_test\smoke_test.vcxproj", "{218B5DDB-6FFC-43EC-9106-AFE60D489A6B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bt_time", "bt_time\bt_time.vcxproj", "{1A60E8B3-B7F4-4E08-938B-E97B80519666}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5827122A-69E7-4922-B856-2AEF221D2178} = {5827122A-69E7-4922-B856-2AEF221D2178}
+		{4029727B-2CD8-44C5-837D-92F2E987FEBE} = {4029727B-2CD8-44C5-837D-92F2E987FEBE}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "support_dll", "support_dll\support_dll.vcxproj", "{4029727B-2CD8-44C5-837D-92F2E987FEBE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5827122A-69E7-4922-B856-2AEF221D2178} = {5827122A-69E7-4922-B856-2AEF221D2178}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "system_dll", "system_dll\system_dll.vcxproj", "{5827122A-69E7-4922-B856-2AEF221D2178}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -13,6 +26,18 @@ Global
 		{218B5DDB-6FFC-43EC-9106-AFE60D489A6B}.Debug|Win32.Build.0 = Debug|Win32
 		{218B5DDB-6FFC-43EC-9106-AFE60D489A6B}.Release|Win32.ActiveCfg = Release|Win32
 		{218B5DDB-6FFC-43EC-9106-AFE60D489A6B}.Release|Win32.Build.0 = Release|Win32
+		{1A60E8B3-B7F4-4E08-938B-E97B80519666}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1A60E8B3-B7F4-4E08-938B-E97B80519666}.Debug|Win32.Build.0 = Debug|Win32
+		{1A60E8B3-B7F4-4E08-938B-E97B80519666}.Release|Win32.ActiveCfg = Release|Win32
+		{1A60E8B3-B7F4-4E08-938B-E97B80519666}.Release|Win32.Build.0 = Release|Win32
+		{4029727B-2CD8-44C5-837D-92F2E987FEBE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4029727B-2CD8-44C5-837D-92F2E987FEBE}.Debug|Win32.Build.0 = Debug|Win32
+		{4029727B-2CD8-44C5-837D-92F2E987FEBE}.Release|Win32.ActiveCfg = Release|Win32
+		{4029727B-2CD8-44C5-837D-92F2E987FEBE}.Release|Win32.Build.0 = Release|Win32
+		{5827122A-69E7-4922-B856-2AEF221D2178}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5827122A-69E7-4922-B856-2AEF221D2178}.Debug|Win32.Build.0 = Debug|Win32
+		{5827122A-69E7-4922-B856-2AEF221D2178}.Release|Win32.ActiveCfg = Release|Win32
+		{5827122A-69E7-4922-B856-2AEF221D2178}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
