@@ -178,10 +178,10 @@ namespace btree {
     const_iterator          lower_bound(const key_type& x) const {return const_cast<mbt_map*>(this)->lower_bound(x);}
     iterator                upper_bound(const key_type& x);
     const_iterator          upper_bound(const key_type& x) const {return const_cast<mbt_map*>(this)->upper_bound(x);}
-    std::pair<iterator,iterator>
-                            equal_range(const key_type& x);
+    std::pair<iterator, iterator>
+                            equal_range(const key_type& x) {return std::make_pair(lower_bound(x), upper_bound(x));}
     std::pair<const_iterator, const_iterator>
-                            equal_range(const key_type& x) const;
+                            equal_range(const key_type& x) const {return std::make_pair(lower_bound(x), upper_bound(x));}
 
   private:
 

@@ -148,6 +148,42 @@ int cpp_main(int, char*[])
   BOOST_TEST(const_bt->upper_bound(40)==const_bt->end());
   BOOST_TEST(const_bt->upper_bound(41)==const_bt->end());
 
+  cout << "equal_range test" << endl;
+
+  std::pair<map::iterator, map::iterator> eq = bt.equal_range(0);
+  BOOST_TEST(eq.first->first == 1);
+  BOOST_TEST(eq.second->first == 1);
+  eq = bt.equal_range(1);
+  BOOST_TEST(eq.first->first == 1);
+  BOOST_TEST(eq.second->first == 2);
+  eq = bt.equal_range(20);
+  BOOST_TEST(eq.first->first == 20);
+  BOOST_TEST(eq.second->first == 21);
+  eq = bt.equal_range(40);
+  BOOST_TEST(eq.first->first == 40);
+  BOOST_TEST(eq.second == bt.end());
+  eq = bt.equal_range(41);
+  BOOST_TEST(eq.first == bt.end());
+  BOOST_TEST(eq.second == bt.end());
+
+  cout << "const equal_range test" << endl;
+
+  std::pair<map::const_iterator, map::const_iterator> const_eq = const_bt->equal_range(0);
+  BOOST_TEST(const_eq.first->first == 1);
+  BOOST_TEST(const_eq.second->first == 1);
+  const_eq = const_bt->equal_range(1);
+  BOOST_TEST(const_eq.first->first == 1);
+  BOOST_TEST(const_eq.second->first == 2);
+  const_eq = const_bt->equal_range(20);
+  BOOST_TEST(const_eq.first->first == 20);
+  BOOST_TEST(const_eq.second->first == 21);
+  const_eq = const_bt->equal_range(40);
+  BOOST_TEST(const_eq.first->first == 40);
+  BOOST_TEST(const_eq.second == const_bt->end());
+  const_eq = const_bt->equal_range(41);
+  BOOST_TEST(const_eq.first == const_bt->end());
+  BOOST_TEST(const_eq.second == const_bt->end());
+
   return report_errors();
 }
 
