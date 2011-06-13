@@ -177,7 +177,7 @@ namespace btree {
     iterator                lower_bound(const key_type& x);
     const_iterator          lower_bound(const key_type& x) const {return const_cast<mbt_map*>(this)->lower_bound(x);}
     iterator                upper_bound(const key_type& x);
-    const_iterator          upper_bound(const key_type& x) const;
+    const_iterator          upper_bound(const key_type& x) const {return const_cast<mbt_map*>(this)->upper_bound(x);}
     std::pair<iterator,iterator>
                             equal_range(const key_type& x);
     std::pair<const_iterator, const_iterator>
@@ -377,6 +377,7 @@ namespace btree {
     void  m_new_root();
 
     iterator m_special_lower_bound(const key_type& k) const;
+    iterator m_special_upper_bound(const key_type& k) const;
 
     void m_leaf_insert(const key_type& k, const mapped_type& mv,
                   leaf_node*& np, leaf_value*& ep);
@@ -743,7 +744,6 @@ typename mbt_map<Key,T,Compare,Allocator>::iterator
 mbt_map<Key,T,Compare,Allocator>::
 lower_bound(const key_type& k)
 {
-
   iterator low = m_special_lower_bound(k);
 
   if (low.m_element != low.m_node->end())
@@ -757,6 +757,54 @@ lower_bound(const key_type& k)
 
   // lower bound is first element on next node
   leaf_node* np = low.m_node->next_node();
+  return !np->is_root() ? iterator(np, np->begin()) : end();
+}
+
+//-----------------------------  m_special_upper_bound()  ------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+typename mbt_map<Key,T,Compare,Allocator>::iterator
+mbt_map<Key,T,Compare,Allocator>::
+m_special_upper_bound(const key_type& k) const
+{
+  branch_node* bp = branch_cast(m_root);
+
+  // search branches down the tree until a leaf is reached
+  while (bp->is_branch())
+  {
+    branch_value* up
+      = std::upper_bound(bp->begin(), bp->end(), k, branch_comp());
+
+    // create the child->parent list
+    node* child = up->first;
+    child->parent_node(bp);
+    child->parent_element(up);
+
+    bp = branch_cast(child);
+  }
+
+  //  search leaf
+  leaf_node* lp = leaf_cast(bp);
+  leaf_value* up
+    = std::upper_bound(lp->begin(), lp->end(), k, value_comp());
+
+  return iterator(lp, up);
+}
+
+//---------------------------------- upper_bound() -------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+typename mbt_map<Key,T,Compare,Allocator>::iterator
+mbt_map<Key,T,Compare,Allocator>::
+upper_bound(const key_type& k)
+{
+  iterator up = m_special_upper_bound(k);
+
+  if (up.m_element != up.m_node->end())
+    return up;
+
+  // upper bound is first element on next node
+  leaf_node* np = up.m_node->next_node();
   return !np->is_root() ? iterator(np, np->begin()) : end();
 }
 

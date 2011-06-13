@@ -132,6 +132,22 @@ int cpp_main(int, char*[])
     BOOST_TEST_EQ(const_bt->find(i)->first, i);
   BOOST_TEST(const_bt->find(41)==const_bt->end());
 
+  cout << "upper_bound test" << endl;
+
+  BOOST_TEST_EQ(bt.upper_bound(0)->first, 1);
+  BOOST_TEST_EQ(bt.upper_bound(1)->first, 2);
+  BOOST_TEST_EQ(bt.upper_bound(20)->first, 21);
+  BOOST_TEST(bt.upper_bound(40)==bt.end());
+  BOOST_TEST(bt.upper_bound(41)==bt.end());
+
+  cout << "const upper_bound test" << endl;
+
+  BOOST_TEST_EQ(const_bt->upper_bound(0)->first, 1);
+  BOOST_TEST_EQ(const_bt->upper_bound(1)->first, 2);
+  BOOST_TEST_EQ(const_bt->upper_bound(20)->first, 21);
+  BOOST_TEST(const_bt->upper_bound(40)==const_bt->end());
+  BOOST_TEST(const_bt->upper_bound(41)==const_bt->end());
+
   return report_errors();
 }
 
