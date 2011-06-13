@@ -459,6 +459,25 @@ m_begin() BOOST_NOEXCEPT
   return iterator(lp, lp->begin());
 }
 
+//---------------------------------  operator[]()  -------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+T&
+mbt_map<Key,T,Compare,Allocator>::
+operator[](const key_type& k)
+{
+  iterator it = m_special_lower_bound(k);
+
+  bool not_found = it.m_element == it.m_node->end()
+         || key_comp()(k, it->first)
+         || key_comp()(it->first, k);
+
+  if (not_found)
+    m_leaf_insert(k, T(), it.m_node, it.m_element);
+
+  return it->second;
+}
+
 //----------------------------------- m_new_root() -------------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>

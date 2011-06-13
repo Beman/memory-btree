@@ -184,6 +184,20 @@ int cpp_main(int, char*[])
   BOOST_TEST(const_eq.first == const_bt->end());
   BOOST_TEST(const_eq.second == const_bt->end());
 
+  cout << "operator[] l-value test" << endl;
+
+  map::size_type sz = bt.size();
+  map::key_type key = 20;
+  BOOST_TEST_EQ(bt.find(key)->second, key*100);
+  bt[key] = key*1000;
+  BOOST_TEST_EQ(bt.size(), sz);
+  BOOST_TEST_EQ(bt.find(key)->second, key*1000);
+  key = 50;
+  BOOST_TEST(bt.find(key) == bt.end());
+  bt[key] = key*1000;
+  BOOST_TEST_EQ(bt.size(), sz+1);
+  BOOST_TEST_EQ(bt.find(key)->second, key*1000);
+
   return report_errors();
 }
 
