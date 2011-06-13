@@ -13,6 +13,7 @@
 #include <boost/btree/detail/config.hpp>
 #include <boost/random.hpp>
 #include <boost/btree/support/timer.hpp>
+#include <boost/btree/support/random_string.hpp>
 #include <boost/detail/lightweight_main.hpp>
 
 #include <iostream>
@@ -63,25 +64,16 @@ namespace
     return ratio_btree_to_stl ? "ratio btree/stl" : "ratio stl/btree";
   }
 
-  template <class BT>
-  void test()
+  template <class BT, class RNG, class VarGen>
+  void test(BT& bt, RNG& rng, VarGen& key)
   {
     btree::run_timer t(3);
-    rand48  rng;
-    uniform_int<long> n_dist(0, n-1);
-    variate_generator<rand48&, uniform_int<long> > key(rng, n_dist);
-
     {
-      t.start();
-      BT bt(node_sz);
-      t.stop();
-      t.report();
 
       if (do_insert)
       {
         cout << "\ninserting " << n << " btree elements..." << endl;
         rng.seed(seed);
-        std::pair<boost::int32_t, boost::int32_t> value;
         t.start();
         for (long i = 1; i <= n; ++i)
         {
@@ -126,7 +118,7 @@ namespace
         cout << "\nfinding " << n << " btree elements..." << endl;
         rng.seed(seed);
         typename BT::const_iterator itr;
-        long k;
+        typename BT::key_type k;
         t.start();
         for (long i = 1; i <= n; ++i)
         {
@@ -149,15 +141,15 @@ namespace
       {
         cout << "\niterating over " << bt.size() << " btree elements..." << endl;
         unsigned long count = 0;
-        long prior_key = -1L;
+        typename BT::key_type prior_key;
         t.start();
         for (typename BT::const_iterator itr = bt.begin();
           itr != bt.end();
           ++itr)
         {
-          ++count;
-          if (itr->first <= prior_key)
+          if (count && itr->first <= prior_key)
             throw std::runtime_error("btree iteration sequence error");
+          ++count;
           prior_key = itr->first;
         }
         iterate_tm = t.stop();
@@ -201,7 +193,7 @@ namespace
 
     }
 
-    typedef std::map<long, long>  stl_type;
+    typedef std::map<typename BT::key_type, long>  stl_type;
     stl_type stl;
 
     if (stl_tests)
@@ -249,7 +241,7 @@ namespace
 
       cout << "\nfinding " << n << " std::map elements..." << endl;
       stl_type::const_iterator itr;
-      long k;
+      typename BT::key_type k;
       rng.seed(seed);
       t.start();
       for (long i = 1; i <= n; ++i)
@@ -294,15 +286,15 @@ namespace
 
       cout << "\niterating over " << stl.size() << " stl elements..." << endl;
       unsigned long count = 0;
-      long prior_key = -1L;
+      typename BT::key_type prior_key;
       t.start();
       for (stl_type::const_iterator itr = stl.begin();
         itr != stl.end();
         ++itr)
       {
-        ++count;
-        if (itr->first <= prior_key)
+        if (count && itr->first <= prior_key)
           throw std::runtime_error("stl iteration sequence error");
+        ++count;
         prior_key = itr->first;
       }
       this_tm = t.stop();
@@ -458,7 +450,26 @@ int cpp_main(int argc, char * argv[])
 
   cout << "starting tests with node size " << node_sz << "\n";
 
-  test<boost::btree::mbt_map<boost::int32_t, boost::int32_t>>();
+  {
+    cout << "*************************  key_type long tests  ****************************\n";
+    rand48  rng;
+    uniform_int<long> n_dist(0, n-1);
+    variate_generator<rand48&, uniform_int<long> > key(rng, n_dist);
+
+    typedef boost::btree::mbt_map<boost::int32_t, boost::int32_t> map_type;
+    map_type bt(node_sz);
+
+    test(bt, rng, key);
+  }
+  {
+    cout << "*************************  key_type string tests  ****************************\n";
+    boost::random_string  rng(4, 50, 'a', 'z');
+
+    typedef boost::btree::mbt_map<std::string, boost::int32_t> map_type;
+    map_type bt(node_sz);
+
+    test(bt, rng, rng);
+  }
 
   return 0;
 }
