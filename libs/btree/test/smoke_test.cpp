@@ -12,13 +12,44 @@
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/btree/mbt_map.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <boost/btree/detail/archetype.hpp>
 #include <utility>
 
 using namespace boost;
 using std::cout; using std::endl;
 
+namespace
+{
+  class archetype_compare
+  {
+  public:
+    bool operator()(const archetype& x, const archetype& y) const
+    {
+      return x.value() < y.value();
+    }
+  };
+
+  void archetype_test()
+  {
+    cout << "archetype test" << endl;
+
+    typedef btree::mbt_map<archetype, long, archetype_compare> map;
+    map bt(128);
+
+    std::pair<const archetype, long> v1(1, 1*100);
+    archetype_count::clear();
+    bt.insert(v1);
+    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
+    BOOST_TEST_EQ(archetype_count::sum(), 1);
+    if (archetype_count::copy_construct != 1 || archetype_count::sum() != 1)
+      archetype_count::dump(std::cerr);
+  }
+} // unnamed namespace
+
 int cpp_main(int, char*[])
 {
+  archetype_test();
+
   typedef btree::mbt_map<int, long> map;
 
   cout << "type test" << endl;
