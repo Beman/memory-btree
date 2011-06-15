@@ -206,7 +206,7 @@ namespace
       {
         if (lg && i % lg == 0)
           std::cout << i << std::endl;
-        stl_type::value_type element(key(), i);
+        typename stl_type::value_type element(key(), i);
         stl.insert(element);
       }
       this_tm = t.stop();
@@ -240,7 +240,7 @@ namespace
       //          / (this_tm.system + this_tm.user) << '\n';
 
       cout << "\nfinding " << n << " std::map elements..." << endl;
-      stl_type::const_iterator itr;
+      typename stl_type::const_iterator itr;
       typename BT::key_type k;
       rng.seed(seed);
       t.start();
@@ -288,7 +288,7 @@ namespace
       unsigned long count = 0;
       typename BT::key_type prior_key;
       t.start();
-      for (stl_type::const_iterator itr = stl.begin();
+      for (typename stl_type::const_iterator itr = stl.begin();
         itr != stl.end();
         ++itr)
       {
@@ -442,7 +442,7 @@ int cpp_main(int argc, char * argv[])
       "   -k       Pack tree after insert test\n"
       "   -v       Verbose output statistics\n"
       "   -stl     Also run the tests against std::map\n"
-      "   -rx      Report ration as stl/btree instead of btree/stl\n" 
+      "   -rx      Report ratio as stl/btree instead of btree/stl\n"
       "   -html    Output html table of results to cerr\n"
       ;
     return 1;
