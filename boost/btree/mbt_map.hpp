@@ -15,12 +15,13 @@
 #include <functional>
 #include <utility>
 #include <memory>
+#include <new>
 #include <iterator>
 #include <algorithm>
 #include <boost/cstdint.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/assert.hpp>
-#include <cstring>  // for memset
+#include <boost/btree/detail/placement_move.hpp>
 
 
 /*
@@ -93,7 +94,7 @@ namespace btree {
     };
 
     // 23.4.4.2, construct/copy/destroy:
-    explicit mbt_map(size_type   node_sz = default_node_size,
+    explicit mbt_map(size_type node_sz = default_node_size,
       const Compare& comp = Compare(), const Allocator& alloc = Allocator())
       : m_key_compare(comp), m_value_compare(comp), m_branch_value_compare(comp),
         m_alloc(alloc) {m_init(node_sz);}
@@ -569,7 +570,7 @@ m_leaf_insert(const key_type& k, const mapped_type& mv,
 
     // split node np by moving half the elements to node new_node
     new_node->size(np->size() / 2);  // round down to minimize move size
-    std::move(np->end() - new_node->size(), np->end(), new_node->begin());
+    detail::placement_move(np->end() - new_node->size(), np->end(), new_node->begin());
     np->size(np->size() - new_node->size());
 
     // TODO: if the insert point will fall on the new node, it would be faster to
@@ -591,6 +592,9 @@ m_leaf_insert(const key_type& k, const mapped_type& mv,
   BOOST_ASSERT(insert_begin >= np->begin());
   BOOST_ASSERT(insert_begin <= np->end());
 
+  // prep memory at end() for use
+  ::new (np->end()) leaf_value;
+
   // make room for insert
   std::move_backward(insert_begin, np->end(), np->end()+1);
 
@@ -603,7 +607,8 @@ m_leaf_insert(const key_type& k, const mapped_type& mv,
   // if there is a new node, its initial key and leaf_node* are inserted into parent
   if (new_node)
   {
-    m_branch_insert(std::move(new_node->begin()->first), old_node, new_node);
+    key_type first_key = new_node->begin()->first;  // avoid unwanted move
+    m_branch_insert(std::move(first_key), old_node, new_node);
 
     // if the insert point changed, update the caller's pointers
     if (ep != insert_begin)
@@ -663,16 +668,15 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
 //    }
 
     // split node old_node by moving half the elements to node new_node
-//    cout << "\nold_node->size()=" << old_node->size() << '\n';
     new_node->size(old_node->size() / 2);  // round down to minimize move size
-//    cout << "\nnew_node->size()=" << new_node->size() << '\n';
-    std::move(old_node->end() - new_node->size(), old_node->end(), new_node->begin());
+    detail::placement_move(old_node->end() - new_node->size(), old_node->end(),
+      new_node->begin());
     new_node->end()->first = old_node->end()->first; // copy the end pseudo-element
     old_node->size(old_node->size() - (new_node->size()+1));
 //    cout << "\nupdated old_node->size()=" << old_node->size() << '\n';
 
-    // Do the promotion now, since old_node->end().second is the key that needs to be promoted
-    // regardless of which node the insert occurs on.
+    // Do the promotion now, since old_node->end().second is the key that needs to be
+    // promoted regardless of which node the insert occurs on.
     m_branch_insert(std::move(old_node->end()->second), old_node, new_node);
 
     // TODO: if the insert point will fall on the new node, it would be faster to
@@ -698,6 +702,9 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
 
   BOOST_ASSERT(insert_begin >= insert_node->begin());
   BOOST_ASSERT(insert_begin <= insert_node->end());
+
+  // prep memory at end()->second for use
+  ::new (&insert_node->end()->second) key_type;
 
   // make room for insert
   if (insert_begin != insert_node->end())

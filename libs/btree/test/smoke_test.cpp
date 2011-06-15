@@ -39,10 +39,23 @@ namespace
     std::pair<const archetype, long> v1(1, 1*100);
     archetype_count::clear();
     bt.insert(v1);
-    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
-    BOOST_TEST_EQ(archetype_count::sum(), 1);
-    if (archetype_count::copy_construct != 1 || archetype_count::sum() != 1)
-      archetype_count::dump(std::cerr);
+//    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
+//    BOOST_TEST_EQ(archetype_count::sum(), 1);
+    cout << '\n';
+    archetype_count::dump(cout);
+
+    std::pair<const archetype, long> v3(3, 3*100);
+    archetype_count::clear();
+    bt.insert(v3);
+    cout << '\n';
+    archetype_count::dump(cout);
+
+    std::pair<const archetype, long> v2(2, 2*100);
+    archetype_count::clear();
+    bt.insert(v2);
+    cout << '\n';
+    archetype_count::dump(cout);
+    cout << endl;
   }
 } // unnamed namespace
 
