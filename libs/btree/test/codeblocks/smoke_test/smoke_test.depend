@@ -1765,25 +1765,33 @@
 	<iostream>
 	<boost/current_function.hpp>
 
-1294779211 c:\boost\trunk\boost\current_function.hpp
+1308093037 c:\boost\trunk\boost\current_function.hpp
 
-1307824833 source:c:\boost\btree-in-memory\libs\btree\test\smoke_test.cpp
-	<iostream>
+1308147766 source:c:\boost\btree-in-memory\libs\btree\test\smoke_test.cpp
+	<boost/config/warning_disable.hpp>
 	<boost/config.hpp>
+	<iostream>
 	<boost/detail/lightweight_main.hpp>
 	<boost/detail/lightweight_test.hpp>
 	<boost/btree/mbt_map.hpp>
 	<boost/type_traits/is_same.hpp>
+	<boost/btree/detail/archetype.hpp>
 	<utility>
 
-1307824719 c:\boost\btree-in-memory\boost\btree\mbt_map.hpp
+1308147595 c:\boost\btree-in-memory\boost\btree\mbt_map.hpp
+	<boost/config/warning_disable.hpp>
+	<boost/config.hpp>
 	<cstddef>
+	<functional>
 	<utility>
 	<memory>
+	<new>
 	<iterator>
 	<algorithm>
+	<boost/cstdint.hpp>
 	<boost/iterator/iterator_facade.hpp>
 	<boost/assert.hpp>
+	<boost/btree/detail/placement_move.hpp>
 	<cstring>
 
 1294779211 c:\boost\trunk\boost\cstdint.hpp
@@ -1816,4 +1824,18 @@
 	<iostream>
 	<boost/current_function.hpp>
 	<boost/assert.hpp>
+
+1302008087 c:\boost\trunk\boost\config\warning_disable.hpp
+
+1308138090 c:\boost\btree-in-memory\boost\btree\detail\placement_move.hpp
+	<cstddef>
+	<iterator>
+	<boost/assert.hpp>
+
+1308085338 c:\boost\btree-in-memory\boost\btree\detail\archetype.hpp
+	<cstddef>
+	<string>
+	<boost/cstdint.hpp>
+	<boost/assert.hpp>
+	<ostream>
 

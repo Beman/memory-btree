@@ -11,7 +11,7 @@
 
 // define BOOST_BTREE_SOURCE so that <boost/btree/detail/config.hpp> knows
 // the library is being built (possibly exporting rather than importing code)
-#define BOOST_BTREE_SOURCE 
+#define BOOST_BTREE_SOURCE
 
 #include <boost/btree/support/timer.hpp>
 #include <boost/system/system_error.hpp>
@@ -43,9 +43,12 @@ void show_time(const char * format, int places, std::ostream& os,
   //  NOTE WELL: Will truncate least-significant digits to LDBL_DIG, which may
   //  be as low as 10, although will be 15 for many common platforms.
   {
-    if (times.wall < microsecond_t(0)) return;
-    if (places > 6) places = 6;
-    else if (places < 0) places = 0;
+    if (times.wall < microsecond_t(0))
+      return;
+    if (places > 6)
+      places = 6;
+    else if (places < 0)
+      places = 0;
 
     boost::io::ios_flags_saver ifs(os);
     boost::io::ios_precision_saver ips(os);
@@ -54,6 +57,8 @@ void show_time(const char * format, int places, std::ostream& os,
 
     const long double sec = 1000000.0L;
     microsecond_t total = times.system + times.user;
+    long double wall_sec = times.wall / sec;
+    long double total_sec = total / sec;
 
     for (; *format; ++format)
     {
@@ -78,10 +83,10 @@ void show_time(const char * format, int places, std::ostream& os,
           break;
         case 'p':
           os.precision(1);
-           if (times.wall && total)
-             os << static_cast<long double>(total) /times. wall * 100.0;
-           else
-             os << 0.0;
+          if (wall_sec > 0.001L && total_sec > 0.001L)
+            os << (total_sec/wall_sec) * 100.0;
+          else
+            os << "n/a";
           os.precision(places);
           break;
         default:
@@ -101,7 +106,7 @@ namespace boost
 
     void run_timer::report()
     {
-      show_time(!m_format 
+      show_time(!m_format
           ? default_format
           : m_format,
         m_places, m_os, this->stop());
@@ -118,8 +123,8 @@ namespace boost
       catch (...) // eat any exceptions
       {
         ec = error_code(EIO, system::generic_category());
-      } 
-      
+      }
+
       return ec;
     }
 

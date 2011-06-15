@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "support_dll", "support_dll\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "system_dll", "system_dll\system_dll.vcxproj", "{5827122A-69E7-4922-B856-2AEF221D2178}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stl_test", "stl_test\stl_test.vcxproj", "{050AD419-42BB-41D5-951E-3F17A0F56DB5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -38,6 +40,10 @@ Global
 		{5827122A-69E7-4922-B856-2AEF221D2178}.Debug|Win32.Build.0 = Debug|Win32
 		{5827122A-69E7-4922-B856-2AEF221D2178}.Release|Win32.ActiveCfg = Release|Win32
 		{5827122A-69E7-4922-B856-2AEF221D2178}.Release|Win32.Build.0 = Release|Win32
+		{050AD419-42BB-41D5-951E-3F17A0F56DB5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{050AD419-42BB-41D5-951E-3F17A0F56DB5}.Debug|Win32.Build.0 = Debug|Win32
+		{050AD419-42BB-41D5-951E-3F17A0F56DB5}.Release|Win32.ActiveCfg = Release|Win32
+		{050AD419-42BB-41D5-951E-3F17A0F56DB5}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

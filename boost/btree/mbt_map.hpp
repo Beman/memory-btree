@@ -22,6 +22,7 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/assert.hpp>
 #include <boost/btree/detail/placement_move.hpp>
+#include <cstring> // for memset
 
 
 /*

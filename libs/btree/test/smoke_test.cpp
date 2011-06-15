@@ -36,7 +36,7 @@ namespace
     typedef btree::mbt_map<archetype, long, archetype_compare> map;
     map bt(128);
 
-    std::pair<const archetype, long> v1(1, 1*100);
+    std::pair<const archetype, long> v1(archetype(1), 1*100);
     archetype_count::clear();
     bt.insert(v1);
 //    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
@@ -44,13 +44,13 @@ namespace
     //cout << '\n';
     //archetype_count::dump(cout);
 
-    std::pair<const archetype, long> v3(3, 3*100);
+    std::pair<const archetype, long> v3(archetype(3), 3*100);
     //archetype_count::clear();
     bt.insert(v3);
     //cout << '\n';
     //archetype_count::dump(cout);
 
-    std::pair<const archetype, long> v2(2, 2*100);
+    std::pair<const archetype, long> v2(archetype(2), 2*100);
     //archetype_count::clear();
     bt.insert(v2);
     cout << '\n';
@@ -61,7 +61,7 @@ namespace
     // on branch inserts and splits
     for (int i = 40; i > 3; --i)
     {
-      std::pair<const archetype, long> x(i, i*100);
+      std::pair<const archetype, long> x(archetype(i), i*100);
       bt.insert(x);
     }
     archetype_count::dump(cout);
