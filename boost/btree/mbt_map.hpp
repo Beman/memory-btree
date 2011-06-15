@@ -678,6 +678,7 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
     // Do the promotion now, since old_node->end().second is the key that needs to be
     // promoted regardless of which node the insert occurs on.
     m_branch_insert(std::move(old_node->end()->second), old_node, new_node);
+    old_node->end()->second.~key_type();  // prep for insert expects uninitialized memory
 
     // TODO: if the insert point will fall on the new node, it would be faster to
     // move the portion before the insert point, copy the value being inserted, and

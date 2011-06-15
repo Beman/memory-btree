@@ -41,21 +41,32 @@ namespace
     bt.insert(v1);
 //    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
 //    BOOST_TEST_EQ(archetype_count::sum(), 1);
-    cout << '\n';
-    archetype_count::dump(cout);
+    //cout << '\n';
+    //archetype_count::dump(cout);
 
     std::pair<const archetype, long> v3(3, 3*100);
-    archetype_count::clear();
+    //archetype_count::clear();
     bt.insert(v3);
-    cout << '\n';
-    archetype_count::dump(cout);
+    //cout << '\n';
+    //archetype_count::dump(cout);
 
     std::pair<const archetype, long> v2(2, 2*100);
-    archetype_count::clear();
+    //archetype_count::clear();
     bt.insert(v2);
     cout << '\n';
+    //archetype_count::dump(cout);
+    //cout << endl;
+
+    // insert enough elements to verify archetype asserts don't fire
+    // on branch inserts and splits
+    for (int i = 40; i > 3; --i)
+    {
+      std::pair<const archetype, long> x(i, i*100);
+      bt.insert(x);
+    }
     archetype_count::dump(cout);
     cout << endl;
+
   }
 } // unnamed namespace
 
