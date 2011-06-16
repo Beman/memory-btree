@@ -83,6 +83,7 @@ namespace
           bt.insert(element);
         }
         insert_tm = t.stop();
+        cout << "  inserts complete" << endl;
         t.report();
       }
 
@@ -134,6 +135,7 @@ namespace
 #       endif
         }
         find_tm = t.stop();
+        cout << "  finds complete" << endl;
         t.report();
       }
 
@@ -153,6 +155,7 @@ namespace
           prior_key = itr->first;
         }
         iterate_tm = t.stop();
+        cout << "  iteration complete" << endl;
         t.report();
         if (count != bt.size())
           throw std::runtime_error("btree iteration count error");
@@ -210,6 +213,7 @@ namespace
         stl.insert(element);
       }
       this_tm = t.stop();
+      cout << "  inserts complete" << endl;
       t.report();
       if (html)
       {
@@ -258,6 +262,7 @@ namespace
 #       endif
       }
       this_tm = t.stop();
+      cout << "  finds complete" << endl;
       t.report();
       if (html)
       {
@@ -298,6 +303,7 @@ namespace
         prior_key = itr->first;
       }
       this_tm = t.stop();
+      cout << "  iteration complete" << endl;
       t.report();
       if (html)
       {
@@ -448,6 +454,7 @@ int cpp_main(int argc, char * argv[])
     return 1;
   }
 
+  cout << "sizeof(std::string) is " << sizeof(std::string) << "\n";
   cout << "starting tests with node size " << node_sz << "\n";
 
   {
@@ -463,7 +470,7 @@ int cpp_main(int argc, char * argv[])
   }
   {
     cout << "*************************  key_type string tests  ****************************\n";
-    boost::random_string  rng(4, 50, 'a', 'z');
+    boost::random_string  rng(4, 30, 'a', 'z');
 
     typedef boost::btree::mbt_map<std::string, boost::int32_t> map_type;
     map_type bt(node_sz);

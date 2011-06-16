@@ -11,7 +11,7 @@
 				<Option object_output="obj\Debug\" />
 				<Option type="1" />
 				<Option compiler="mingw_460" />
-				<Option parameters="10000 -stl -l1000" />
+				<Option parameters="10000 -stl" />
 				<Compiler>
 					<Add option="-std=c++0x" />
 					<Add option="-Wextra" />
