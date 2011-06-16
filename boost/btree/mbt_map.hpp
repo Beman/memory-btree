@@ -255,11 +255,10 @@ namespace btree {
       void          owner(mbt_map* o)               {_owner = o;}
 
       template <class Node>
-      Node* prior_node();  // returns prior node at same height; root node if end
+      Node* next_node();  // returns next node at same height; root node if end
 
       template <class Node>
-      Node* node_cast(node* np) {return reinterpret_cast<Node*>(np);}
-
+      Node* prior_node();  // returns prior node at same height; root node if end
     };
 
     //------------------------------  class leaf_node  ---------------------------------//
@@ -274,8 +273,6 @@ namespace btree {
 
       leaf_value*    begin()                        {return _leaf_values;}
       leaf_value*    end()                          {return _leaf_values + node::_size;}
-
-      leaf_node*     next_node();  // returns next leaf node; root node if end
      };
 
     //-----------------------------  class branch_node  --------------------------------//
@@ -292,8 +289,6 @@ namespace btree {
       branch_value*  end()                          {return _branch_values + node::_size;}
       // pseudo-element end()->first is valid; b-tree branches have size() + 1
       // child pointers - see your favorite computer science textbook.
-
-      branch_node*   next_node();  // returns next node at same height; root node if end
     };
 
     //----------------------------------------------------------------------------------//
@@ -404,8 +399,8 @@ namespace btree {
     // Postcondition: For the nodes pointed to by old_np and new_np, parent_node() and
     //           parent_element() are valid. i.e. updated if needed
 
-    static leaf_node* leaf_cast(node* np)     {return reinterpret_cast<leaf_node*>(np);}
-    static branch_node* branch_cast(node* np) {return reinterpret_cast<branch_node*>(np);}
+    template <class Node>
+    static Node* node_cast(node* np) {return reinterpret_cast<Node*>(np);}
 
   };  // class mbt_map
 
@@ -454,7 +449,7 @@ m_begin() BOOST_NOEXCEPT
   if (empty())
     return end();
 
-  branch_node* bp = branch_cast(m_root);
+  branch_node* bp = node_cast<branch_node>(m_root);
 
   // work down the tree until a leaf is reached
   while (bp->is_branch())
@@ -463,10 +458,10 @@ m_begin() BOOST_NOEXCEPT
     node* child = bp->begin()->first;
     child->parent_node(bp);
     child->parent_element(bp->begin());
-    bp = branch_cast(child);
+    bp = node_cast<branch_node>(child);
   }
 
-  leaf_node* lp = leaf_cast(bp);
+  leaf_node* lp = node_cast<leaf_node>(bp);
   return iterator(lp, lp->begin());
 }
 
@@ -480,7 +475,7 @@ m_last()
   if (empty())
     return end();
 
-  branch_node* bp = branch_cast(m_root);
+  branch_node* bp = node_cast<branch_node>(m_root);
 
   // work down the tree until a leaf is reached
   while (bp->is_branch())
@@ -489,10 +484,10 @@ m_last()
     node* child = bp->end()->first;
     child->parent_node(bp);
     child->parent_element(bp->end());
-    bp = branch_cast(child);
+    bp = node_cast<branch_node>(child);
   }
 
-  leaf_node* lp = leaf_cast(bp);
+  leaf_node* lp = node_cast<leaf_node>(bp);
   BOOST_ASSERT(lp->size());
   return iterator(lp, lp->begin()+(lp->size()-1));
 }
@@ -1018,7 +1013,7 @@ typename mbt_map<Key,T,Compare,Allocator>::iterator
 mbt_map<Key,T,Compare,Allocator>::
 m_special_lower_bound(const key_type& k) const
 {
-  branch_node* bp = branch_cast(m_root);
+  branch_node* bp = node_cast<branch_node>(m_root);
 
   // search branches down the tree until a leaf is reached
   while (bp->is_branch())
@@ -1037,11 +1032,11 @@ m_special_lower_bound(const key_type& k) const
     child->parent_node(bp);
     child->parent_element(low);
 
-    bp = branch_cast(child);
+    bp = node_cast<branch_node>(child);
   }
 
   //  search leaf
-  leaf_node* lp = leaf_cast(bp);
+  leaf_node* lp = node_cast<leaf_node>(bp);
   leaf_value* low
     = std::lower_bound(lp->begin(), lp->end(), k, value_comp());
 
@@ -1067,7 +1062,7 @@ lower_bound(const key_type& k)
   }
 
   // lower bound is first element on next node
-  leaf_node* np = low.m_node->next_node();
+  leaf_node* np = low.m_node->next_node<leaf_node>();
   return !np->is_root() ? iterator(np, np->begin()) : end();
 }
 
@@ -1078,7 +1073,7 @@ typename mbt_map<Key,T,Compare,Allocator>::iterator
 mbt_map<Key,T,Compare,Allocator>::
 m_special_upper_bound(const key_type& k) const
 {
-  branch_node* bp = branch_cast(m_root);
+  branch_node* bp = node_cast<branch_node>(m_root);
 
   // search branches down the tree until a leaf is reached
   while (bp->is_branch())
@@ -1091,11 +1086,11 @@ m_special_upper_bound(const key_type& k) const
     child->parent_node(bp);
     child->parent_element(up);
 
-    bp = branch_cast(child);
+    bp = node_cast<branch_node>(child);
   }
 
   //  search leaf
-  leaf_node* lp = leaf_cast(bp);
+  leaf_node* lp = node_cast<leaf_node>(bp);
   leaf_value* up
     = std::upper_bound(lp->begin(), lp->end(), k, value_comp());
 
@@ -1115,7 +1110,7 @@ upper_bound(const key_type& k)
     return up;
 
   // upper bound is first element on next node
-  leaf_node* np = up.m_node->next_node();
+  leaf_node* np = up.m_node->next_node<leaf_node>();
   return !np->is_root() ? iterator(np, np->begin()) : end();
 }
 
@@ -1132,15 +1127,16 @@ find(const key_type& k)
     : end();
 }
 
-//------------------------------  leaf_node::next_node()  ------------------------------//
+//--------------------------------  node::next_node()  ---------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::leaf_node*
-mbt_map<Key,T,Compare,Allocator>::leaf_node::
-next_node()  // return next leaf_node, root_node if end
+template <class Node>
+Node*
+mbt_map<Key,T,Compare,Allocator>::node::
+next_node()  // return next node at same height, root_node if end
 {
   if (this->is_root())
-    return this;
+    return node_cast<Node>(this);
 
   branch_node*   parent_np = this->parent_node();
   branch_value*  parent_ep = this->parent_element();
@@ -1149,42 +1145,13 @@ next_node()  // return next leaf_node, root_node if end
     ++parent_ep;
   else
   {
-    parent_np = this->parent_node()->next_node();
+    parent_np = this->parent_node()->next_node<branch_node>();
     if (parent_np->is_root())
-      return leaf_cast(parent_np);
+      return node_cast<Node>(parent_np);
     parent_ep = parent_np->begin();
   }
 
-  leaf_node* np = leaf_cast(parent_ep->first);
-  np->parent_node(parent_np);
-  np->parent_element(parent_ep);
-  return np;
-}
-
-//------------------------------  branch_node::next_node()  ----------------------------//
-
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::branch_node*
-mbt_map<Key,T,Compare,Allocator>::branch_node::
-next_node()  // return next branch_node at current height, root_node if end
-{
-  if (this->is_root())
-    return this;
-
-  branch_node*   parent_np = this->parent_node();
-  branch_value*  parent_ep = this->parent_element();
-
-  if (parent_ep != parent_np->end())
-    ++parent_ep;
-  else
-  {
-    parent_np = this->parent_node()->next_node();
-    if (parent_np->is_root())
-      return parent_np;
-    parent_ep = parent_np->begin();
-  }
-
-  branch_node* np = branch_cast(parent_ep->first);
+  Node* np = node_cast<Node>(parent_ep->first);
   np->parent_node(parent_np);
   np->parent_element(parent_ep);
   return np;
@@ -1207,7 +1174,7 @@ increment()
   if (++m_element != m_node->end())
     return;
 
-  m_node = m_node->next_node();  // next leaf node, or root node if end
+  m_node = m_node->next_node<leaf_node>();  // next leaf node, or root node if end
 
   if (!m_node->is_root())
   {
@@ -1221,7 +1188,7 @@ increment()
   }
 }
 
-//-----------------------------------  prior_node()  -----------------------------------//
+//-------------------------------  node::prior_node()  ---------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>
 template <class Node>
