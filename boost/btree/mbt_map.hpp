@@ -479,7 +479,7 @@ operator[](const key_type& x)
 
   if (not_found)
   {
-    key_type k(x); 
+    key_type k(x);
     m_leaf_insert(std::move(k), T(), it.m_node, it.m_element);
   }
 
@@ -501,7 +501,7 @@ operator[](key_type&& x)
 
   if (not_found)
   {
-    m_leaf_insert(k, T(), it.m_node, it.m_element);
+    m_leaf_insert(x, T(), it.m_node, it.m_element);
   }
 
   return it->second;
