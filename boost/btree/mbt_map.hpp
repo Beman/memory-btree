@@ -253,6 +253,13 @@ namespace btree {
       void          parent_node(branch_node* p)     {_parent_node = p;}
       void          parent_element(branch_value* p) {_parent_element = p;}
       void          owner(mbt_map* o)               {_owner = o;}
+
+      template <class Node>
+      Node* prior_node();  // returns prior node at same height; root node if end
+
+      template <class Node>
+      Node* node_cast(node* np) {return reinterpret_cast<Node*>(np);}
+
     };
 
     //------------------------------  class leaf_node  ---------------------------------//
@@ -377,12 +384,11 @@ namespace btree {
     }
 
     template <class Node>
-    Node* m_new_node(uint16_t height_, size_type max_elements);
-
-    void  m_new_root();
-
-    iterator m_special_lower_bound(const key_type& k) const;
-    iterator m_special_upper_bound(const key_type& k) const;
+    Node*     m_new_node(uint16_t height_, size_type max_elements);
+    void      m_new_root();
+    iterator  m_special_lower_bound(const key_type& k) const;
+    iterator  m_special_upper_bound(const key_type& k) const;
+    iterator  m_last();
 
     void m_leaf_insert(key_type&& k, mapped_type&& mv,
                   leaf_node*& np, leaf_value*& ep);
@@ -462,6 +468,33 @@ m_begin() BOOST_NOEXCEPT
 
   leaf_node* lp = leaf_cast(bp);
   return iterator(lp, lp->begin());
+}
+
+//------------------------------------ m_last() ----------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+typename mbt_map<Key,T,Compare,Allocator>::iterator
+mbt_map<Key,T,Compare,Allocator>::
+m_last()
+{
+  if (empty())
+    return end();
+
+  branch_node* bp = branch_cast(m_root);
+
+  // work down the tree until a leaf is reached
+  while (bp->is_branch())
+  {
+    // create the child->parent list
+    node* child = bp->end()->first;
+    child->parent_node(bp);
+    child->parent_element(bp->end());
+    bp = branch_cast(child);
+  }
+
+  leaf_node* lp = leaf_cast(bp);
+  BOOST_ASSERT(lp->size());
+  return iterator(lp, lp->begin()+(lp->size()-1));
 }
 
 //---------------------------------  operator[]()  -------------------------------------//
@@ -773,7 +806,211 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
 
   //std::cout << "*****branch insert done" << std::endl;
 }
-
+//
+////------------------------------------- erase() ----------------------------------------//
+//
+//template <class Key, class Base, class Traits, class Comp>
+//typename btree_base<Key,Base,Traits,Comp>::const_iterator
+//btree_base<Key,Base,Traits,Comp>::erase(const_iterator pos)
+//{
+//  BOOST_ASSERT_MSG(is_open(), "erase() on unopen btree");
+//  BOOST_ASSERT_MSG(!read_only(), "erase() on read only btree");
+//  BOOST_ASSERT_MSG(pos != end(), "erase() on end iterator");
+//  BOOST_ASSERT(pos.m_node);
+//  BOOST_ASSERT(pos.m_node->is_leaf());
+//  BOOST_ASSERT(&*pos.m_element < &*pos.m_node->leaf().end());
+//  BOOST_ASSERT(&*pos.m_element >= &*pos.m_node->leaf().begin());
+//
+//  m_ok_to_pack = false;  // TODO: is this too conservative?
+//  pos.m_node->needs_write(true);
+//  m_hdr.decrement_element_count();
+//
+//  //key_type nxt_key;  // save next key to be able to find() iterator to be returned
+//  //const_iterator nxt(pos);
+//  //++nxt;
+//  //if (nxt != end())
+//  //  nxt_key = key(*nxt);
+//
+//  if (pos.m_node->node_id() != m_root->node_id()  // not root?
+//    && (pos.m_node->size() == dynamic_size(*pos.m_node->leaf().begin())))  // only 1 element on node?
+//  {
+//    // erase a single value leaf node that is not the root
+//
+//    BOOST_ASSERT(pos.m_node->parent()->node_id() \
+//      == pos.m_node->parent_node_id()); // max_cache_size logic OK?
+//
+//    if (pos.m_node->node_id() == header().first_node_id())
+//    {
+//      btree_node_ptr nxt_node(pos.m_node->next_node());
+//      BOOST_ASSERT(nxt_node);
+//      m_hdr.first_node_id(nxt_node->node_id());
+//    }
+//    if (pos.m_node->node_id() == header().last_node_id())
+//    {
+//      btree_node_ptr prr_node(pos.m_node->prior_node());
+//      BOOST_ASSERT(prr_node);
+//      m_hdr.last_node_id(prr_node->node_id());
+//    }
+//
+//    const_iterator nxt = m_erase_branch_value(pos.m_node->parent(),
+//      pos.m_node->parent_element(), pos.m_node->node_id());
+//
+//    m_free_node(pos.m_node.get());  // add node to free node list
+//    return nxt;
+//  }
+//  else
+//  {
+//    // erase an element from a leaf with multiple elements or erase the only element
+//    // on a leaf that is also the root; these use the same logic because they do not remove
+//    // the node from the tree.
+//
+//    value_type* erase_point = &*pos.m_element;
+//    std::size_t erase_sz = dynamic_size(*erase_point);
+//    std::size_t move_sz = char_ptr(&*pos.m_node->leaf().end())
+//      - (char_ptr(erase_point) + erase_sz);
+//    std::memmove(erase_point, char_ptr(erase_point) + erase_sz, move_sz);
+//    pos.m_node->size(pos.m_node->size() - erase_sz);
+//    std::memset(&*pos.m_node->leaf().end(), 0, erase_sz);
+//
+//    if (pos.m_element != pos.m_node->leaf().end())
+//      return pos;
+//    btree_node_ptr next_node(pos.m_node->next_node());
+//    return !next_node ? end() : iterator(next_node, next_node->leaf().begin());
+//  }
+//}
+//
+////----------------------------------- m_sub_tree_begin() -------------------------------//
+//
+//template <class Key, class Base, class Traits, class Comp>
+//typename btree_base<Key,Base,Traits,Comp>::iterator
+//btree_base<Key,Base,Traits,Comp>::m_sub_tree_begin(node_id_type id)
+//{
+//  if (empty())
+//    return end();
+//  btree_node_ptr np =  m_mgr.read(id);
+//
+//  // work down the tree until a leaf is reached
+//  while (np->is_branch())
+//  {
+//    // create the child->parent list
+//    btree_node_ptr child_np = m_mgr.read(np->branch().begin()->node_id());
+//    child_np->parent(np);
+//    child_np->parent_element(np->branch().begin());
+//#   ifndef NDEBUG
+//    child_np->parent_node_id(np->node_id());
+//#   endif
+//
+//    np = child_np;
+//  }
+//
+//  return iterator(np, np->leaf().begin());
+//}
+//
+////------------------------------ m_erase_branch_value() --------------------------------//
+//
+//template <class Key, class Base, class Traits, class Comp>
+//typename btree_base<Key,Base,Traits,Comp>::iterator
+//btree_base<Key,Base,Traits,Comp>::m_erase_branch_value(
+//  btree_node* np, branch_iterator element, node_id_type erasee)
+//{
+//  BOOST_ASSERT(np->is_branch());
+//  BOOST_ASSERT(&*element >= &*np->branch().begin());
+//  BOOST_ASSERT(&*element <= &*np->branch().end());  // equal to end if pseudo-element only
+//  BOOST_ASSERT(erasee == element->node_id());
+//
+//  if (np->empty()) // end pseudo-element only element on node?
+//                   // i.e. after the erase, the entire sub-tree will be empty
+//  {
+//    BOOST_ASSERT(np->level() != header().root_level());
+//    BOOST_ASSERT(np->parent()->node_id() == np->parent_node_id()); // max_cache_size logic OK?
+//    iterator nxt = m_erase_branch_value(np->parent(),
+//      np->parent_element(), np->node_id()); // erase parent value pointing to np
+//    m_free_node(np); // move node to free node list
+//    return nxt;
+//  }
+//  else
+//  {
+//    void* erase_point;
+//
+//    node_id_type next_id (element == np->branch().end() ? 0 : (element+1)->node_id());
+//
+//    if (element != np->branch().begin())
+//    {
+//      --element;
+//      erase_point = &element->key();
+//    }
+//    else
+//    {
+//      erase_point = &element->node_id();
+//    }
+//    std::size_t erase_sz = dynamic_size(element->key()) + sizeof(node_id_type);
+//    std::size_t move_sz = char_distance(
+//      char_ptr(erase_point)+erase_sz, &np->branch().end()->key());
+//    std::memmove(erase_point, char_ptr(erase_point) + erase_sz, move_sz);
+//    np->size(np->size() - erase_sz);
+//    std::memset(char_ptr(&*np->branch().end()) + sizeof(node_id_type), 0, erase_sz);
+//    np->needs_write(true);
+//
+//    //  set up the return iterator
+//    if (!next_id)
+//    {
+//      btree_node_ptr next_np(np->next_node());
+//      if (!!next_np)
+//        next_id = next_np->branch().begin()->node_id();
+//    }
+//    iterator next_itr (next_id ? m_sub_tree_begin(next_id) : end());
+//
+//    //  recursively free the root node if it is now empty, promoting the end
+//    //  pseudo element to be the new root
+//    while (np->level()   // not the leaf (which can happen if iteration reaches leaf)
+//      && np->branch().begin() == np->branch().end()  // node empty except for P0
+//      && np->level() == header().root_level())   // node is the root
+//    {
+//      // make the end pseudo-element the new root and then free this node
+//      m_hdr.root_node_id(np->branch().end()->node_id());
+//      m_hdr.decrement_root_level();
+//      m_root = m_mgr.read(header().root_node_id());
+//      m_root->parent(btree_node_ptr());
+//      m_root->parent_element(branch_iterator());
+//      m_free_node(np); // move node to free node list
+//      np = m_root.get();
+//    }
+//    return next_itr;
+//  }
+//}
+//
+//template <class Key, class Base, class Traits, class Comp>
+//typename btree_base<Key,Base,Traits,Comp>::size_type
+//btree_base<Key,Base,Traits,Comp>::erase(const key_type& k)
+//{
+//  size_type count = 0;
+//  const_iterator it = lower_bound(k);
+//
+//  while (it != end() && !key_comp()(k, key(*it)))
+//  {
+//    ++count;
+//    it = erase(it);
+//  }
+//  return count;
+//}
+//
+//template <class Key, class Base, class Traits, class Comp>
+//typename btree_base<Key,Base,Traits,Comp>::const_iterator
+//btree_base<Key,Base,Traits,Comp>::erase(const_iterator first, const_iterator last)
+//{
+//  // caution: last must be revalidated when on the same node as first
+//  while (first != last)
+//  {
+//    if (last != end() && first.m_node == last.m_node)
+//    {
+//      BOOST_ASSERT(first.m_element < last.m_element);
+//      --last;  // revalidate in anticipation of erasing a prior element on same node
+//    }
+//    first = erase(first);
+//  }
+//  return last;
+//}
+//
 //-----------------------------  m_special_lower_bound()  ------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>
@@ -981,6 +1218,68 @@ increment()
   {
     m_owner = m_node->owner();
     m_node = 0;
+  }
+}
+
+//-----------------------------------  prior_node()  -----------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+template <class Node>
+Node*
+mbt_map<Key,T,Compare,Allocator>::node::
+prior_node()  // return prior node at same height, root_node if end
+{
+  if (this->is_root())
+    return node_cast<Node>(this);
+
+  branch_node*   parent_np = this->parent_node();
+  branch_value*  parent_ep = this->parent_element();
+
+  if (parent_ep != parent_np->begin())
+    --parent_ep;
+  else
+  {
+    parent_np = this->parent_node()->prior_node<branch_node>();
+    if (parent_np->is_root())
+      return node_cast<Node>(parent_np);
+    parent_ep = parent_np->end();
+  }
+
+  Node* np = node_cast<Node>(parent_ep->first);
+  np->parent_node(parent_np);
+  np->parent_element(parent_ep);
+  return np;
+}
+
+//--------------------------  iterator::decrement()  -----------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+template <class VT>
+void
+mbt_map<Key,T,Compare,Allocator>::iterator_type<VT>::
+decrement()
+{
+  BOOST_ASSERT_MSG(m_element, "attempt to increment uninitialized iterator");
+
+  if (!m_node)  // end iterator
+    *this = m_owner->m_last();
+  else if (m_element != m_node->begin())  // not first element
+    --m_element;
+  else  // not on this node
+  {
+    m_node = m_node->prior_node<leaf_node>();
+
+    if (m_node->is_root())  // precondition violation, so all bets are off
+    {
+      BOOST_ASSERT_MSG(!m_node->is_root(), "attempt to decrement begin() iterator");
+      throw std::runtime_error("attempt to decrement begin() iterator");
+    }
+    else
+    {
+      m_element = m_node->end();
+      BOOST_ASSERT(m_element != m_node->begin());
+      --m_element;
+    }
   }
 }
 
