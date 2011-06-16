@@ -8,12 +8,13 @@
 #endif
 
 #include <iostream>
-#include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/btree/mbt_map.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/btree/detail/archetype.hpp>
 #include <utility>
+
+#include <boost/test/included/prg_exec_monitor.hpp>
 
 using namespace boost;
 using std::cout; using std::endl;
@@ -154,8 +155,29 @@ int cpp_main(int, char*[])
   for (int i = 40; i > 3; --i)
     bt.insert(std::make_pair(i, i*100));
 
-  for (map::const_iterator itr = bt.begin(); itr != bt.end(); ++itr)
-    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+  cout << "forward iteration checksum test" << endl;
+
+  int itr_checksum = 0, loop_checksum = 0;
+  std::size_t loop_counter = 0;
+  map::const_iterator itr;
+  for (itr = bt.begin(); itr != bt.end(); ++itr)
+  {
+//    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+    ++loop_counter;
+    itr_checksum += itr->first;
+    loop_checksum += loop_counter;
+  }
+  BOOST_TEST_EQ(loop_counter, bt.size());
+  BOOST_TEST_EQ(itr_checksum, loop_checksum);
+
+  cout << "backward iteration checksum test" << endl;
+  itr_checksum = 0;
+  for (itr = bt.end(); itr != bt.begin();)
+  {
+    --itr;
+    itr_checksum += itr->first;
+  }
+  BOOST_TEST_EQ(itr_checksum, loop_checksum);
 
   cout << "lower_bound test" << endl;
 

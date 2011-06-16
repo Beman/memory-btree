@@ -14,13 +14,14 @@
 #include <boost/random.hpp>
 #include <boost/btree/support/timer.hpp>
 #include <boost/btree/support/random_string.hpp>
-#include <boost/detail/lightweight_main.hpp>
 
 #include <iostream>
 #include <string>
 #include <cstring>
 #include <cstdlib>  // for atol()
 #include <map>
+
+#include <boost/test/included/prg_exec_monitor.hpp>
 
 using namespace boost;
 using std::cout;

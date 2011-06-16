@@ -9,17 +9,12 @@
 
 #define BOOST_NO_CONSTEXPR
 
-#include <iostream>
-using std::cout;
-using std::endl;
-
 #include <boost/btree/mbt_map.hpp>
 #include <map>
 #include <boost/random.hpp>
 #include <boost/cstdint.hpp>
 //#include <boost/btree/support/timer.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/detail/lightweight_main.hpp>
 #include <boost/detail/lightweight_test.hpp>
 
 #include <string>
@@ -28,6 +23,12 @@ using std::endl;
 #include <cstring>  // for strcmp(), strncmp()
 #include <stdexcept>
 #include <utility>
+
+#include <iostream>
+using std::cout;
+using std::endl;
+
+#include <boost/test/included/prg_exec_monitor.hpp>
 
 using std::atol;
 using std::strcmp;
