@@ -312,40 +312,40 @@ namespace
     cout << "  iteration test complete" << endl;
   }
 
-//  //  backward iteration test  ---------------------------------------------------------//
-//
-//  void backward_iteration_test()
-//  {
-//    cout << "backward iteration test..." << endl;
-//    stl_type::const_iterator stl_itr = stl.end();
-//    bt_type::const_iterator bt_itr = bt.end();
-//
-//    do
-//    {
-//      --stl_itr;
-//      --bt_itr;
-//      if (stl_itr->first != bt_itr->first)
-//      {
-//        cout << "stl_itr->first " << stl_itr->first << " != "
-//              << "bt_itr->first " << bt_itr->first << endl;
-//        throw runtime_error("backward iteration: first check failure");
-//      }
-//      if (stl_itr->second != bt_itr->second)
-//      {
-//        cout << "stl_itr->second " << stl_itr->second << " != "
-//              << "bt_itr->second " << bt_itr->second << endl;
-//        throw runtime_error("backward iteration: second check failure");
-//      }
-//      ++iterate_backward_count;
-//    } while (stl_itr != stl.begin() && bt_itr != bt.begin());
-//
-//    if (stl_itr != stl.begin())
-//      throw runtime_error("iteration: bt at begin() but stl not at begin()");
-//    if (bt_itr != bt.begin())
-//      throw runtime_error("iteration: stl at begin() but bt not at begin()");
-//    cout << "  backward iteration complete" << endl;
-//  }
-//
+  //  backward iteration test  ---------------------------------------------------------//
+
+  void backward_iteration_test()
+  {
+    cout << "backward iteration test..." << endl;
+    stl_type::const_iterator stl_itr = stl.end();
+    bt_type::const_iterator bt_itr = bt.end();
+
+    do
+    {
+      --stl_itr;
+      --bt_itr;
+      if (stl_itr->first != bt_itr->first)
+      {
+        cout << "stl_itr->first " << stl_itr->first << " != "
+              << "bt_itr->first " << bt_itr->first << endl;
+        throw runtime_error("backward iteration: first check failure");
+      }
+      if (stl_itr->second != bt_itr->second)
+      {
+        cout << "stl_itr->second " << stl_itr->second << " != "
+              << "bt_itr->second " << bt_itr->second << endl;
+        throw runtime_error("backward iteration: second check failure");
+      }
+      ++iterate_backward_count;
+    } while (stl_itr != stl.begin() && bt_itr != bt.begin());
+
+    if (stl_itr != stl.begin())
+      throw runtime_error("iteration: bt at begin() but stl not at begin()");
+    if (bt_itr != bt.begin())
+      throw runtime_error("iteration: stl at begin() but bt not at begin()");
+    cout << "  backward iteration complete" << endl;
+  }
+
 //  //  erase test  ----------------------------------------------------------------------//
 //
 //  void erase_test(keygen_t& erase_key)
@@ -693,7 +693,7 @@ namespace
 
       insert_test(insert_keygen);
       iteration_test();
-//      backward_iteration_test();
+      backward_iteration_test();
       find_test();
       lower_bound_test();
       upper_bound_test();

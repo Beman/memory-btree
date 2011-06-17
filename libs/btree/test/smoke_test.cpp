@@ -35,7 +35,7 @@ namespace
     cout << "archetype test" << endl;
 
     typedef btree::mbt_map<archetype, long, archetype_compare> map;
-    map bt(128);
+    map bt(64);
 
     std::pair<const archetype, long> v1(archetype(1), 1*100);
     archetype_count::clear();
@@ -150,10 +150,12 @@ int cpp_main(int, char*[])
   ++it;
   BOOST_TEST(it == bt.end());
 
-  cout << "insert 20 test" << endl;
+  cout << "insert more test" << endl;
 
-  for (int i = 40; i > 3; --i)
+  for (int i = 100; i > 3; --i)
     bt.insert(std::make_pair(i, i*100));
+  BOOST_TEST_EQ(bt.size(), 100U);
+  cout << "  complete, height() is " << bt.height() << '\n';
 
   cout << "forward iteration checksum test" << endl;
 
@@ -185,45 +187,45 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(bt.lower_bound(1)->first, 1);
   BOOST_TEST_EQ(bt.lower_bound(20)->first, 20);
   BOOST_TEST_EQ(bt.lower_bound(40)->first, 40);
-  BOOST_TEST(bt.lower_bound(41)==bt.end());
+  BOOST_TEST(bt.lower_bound(bt.size()+1)==bt.end());
 
   cout << "const lower_bound test" << endl;
 
   BOOST_TEST_EQ(const_bt->lower_bound(0)->first, 1);
   BOOST_TEST_EQ(const_bt->lower_bound(1)->first, 1);
   BOOST_TEST_EQ(const_bt->lower_bound(20)->first, 20);
-  BOOST_TEST_EQ(const_bt->lower_bound(40)->first, 40);
-  BOOST_TEST(const_bt->lower_bound(41)==const_bt->end());
+  BOOST_TEST_EQ(const_bt->lower_bound(bt.size())->first, bt.size());
+  BOOST_TEST(const_bt->lower_bound(bt.size()+1)==const_bt->end());
 
   cout << "find test" << endl;
 
   BOOST_TEST(bt.find(0)==bt.end());
-  for (int i = 1; i < 41; ++i)
+  for (int i = 1; i <= int(bt.size()); ++i)
     BOOST_TEST_EQ(bt.find(i)->first, i);
-  BOOST_TEST(bt.find(41)==bt.end());
+  BOOST_TEST(bt.find(bt.size()+1)==bt.end());
 
   cout << "const find test" << endl;
 
   BOOST_TEST(const_bt->find(0)==const_bt->end());
-  for (int i = 1; i < 41; ++i)
+  for (int i = 1; i <= int(bt.size()); ++i)
     BOOST_TEST_EQ(const_bt->find(i)->first, i);
-  BOOST_TEST(const_bt->find(41)==const_bt->end());
+  BOOST_TEST(const_bt->find(bt.size()+1)==const_bt->end());
 
   cout << "upper_bound test" << endl;
 
   BOOST_TEST_EQ(bt.upper_bound(0)->first, 1);
   BOOST_TEST_EQ(bt.upper_bound(1)->first, 2);
   BOOST_TEST_EQ(bt.upper_bound(20)->first, 21);
-  BOOST_TEST(bt.upper_bound(40)==bt.end());
-  BOOST_TEST(bt.upper_bound(41)==bt.end());
+  BOOST_TEST(bt.upper_bound(bt.size())==bt.end());
+  BOOST_TEST(bt.upper_bound(bt.size()+1)==bt.end());
 
   cout << "const upper_bound test" << endl;
 
   BOOST_TEST_EQ(const_bt->upper_bound(0)->first, 1);
   BOOST_TEST_EQ(const_bt->upper_bound(1)->first, 2);
   BOOST_TEST_EQ(const_bt->upper_bound(20)->first, 21);
-  BOOST_TEST(const_bt->upper_bound(40)==const_bt->end());
-  BOOST_TEST(const_bt->upper_bound(41)==const_bt->end());
+  BOOST_TEST(const_bt->upper_bound(bt.size())==const_bt->end());
+  BOOST_TEST(const_bt->upper_bound(bt.size()+1)==const_bt->end());
 
   cout << "equal_range test" << endl;
 
@@ -236,10 +238,10 @@ int cpp_main(int, char*[])
   eq = bt.equal_range(20);
   BOOST_TEST(eq.first->first == 20);
   BOOST_TEST(eq.second->first == 21);
-  eq = bt.equal_range(40);
-  BOOST_TEST(eq.first->first == 40);
+  eq = bt.equal_range(bt.size());
+  BOOST_TEST(eq.first->first == bt.size());
   BOOST_TEST(eq.second == bt.end());
-  eq = bt.equal_range(41);
+  eq = bt.equal_range(bt.size()+1);
   BOOST_TEST(eq.first == bt.end());
   BOOST_TEST(eq.second == bt.end());
 
@@ -254,10 +256,10 @@ int cpp_main(int, char*[])
   const_eq = const_bt->equal_range(20);
   BOOST_TEST(const_eq.first->first == 20);
   BOOST_TEST(const_eq.second->first == 21);
-  const_eq = const_bt->equal_range(40);
-  BOOST_TEST(const_eq.first->first == 40);
+  const_eq = const_bt->equal_range(bt.size());
+  BOOST_TEST(const_eq.first->first == bt.size());
   BOOST_TEST(const_eq.second == const_bt->end());
-  const_eq = const_bt->equal_range(41);
+  const_eq = const_bt->equal_range(bt.size()+1);
   BOOST_TEST(const_eq.first == const_bt->end());
   BOOST_TEST(const_eq.second == const_bt->end());
 
@@ -269,11 +271,23 @@ int cpp_main(int, char*[])
   bt[key] = key*1000;
   BOOST_TEST_EQ(bt.size(), sz);
   BOOST_TEST_EQ(bt.find(key)->second, key*1000);
-  key = 50;
+  key = bt.size()+1;
   BOOST_TEST(bt.find(key) == bt.end());
   bt[key] = key*1000;
   BOOST_TEST_EQ(bt.size(), sz+1);
   BOOST_TEST_EQ(bt.find(key)->second, key*1000);
+
+  cout << "erase by key test" << endl;
+
+  map::size_type old_sz = bt.size();
+  map::size_type ct = bt.erase(20);
+  BOOST_TEST_EQ(ct, 1U);
+  BOOST_TEST_EQ(bt.size(), old_sz-1);
+
+//  for (int i = 1; i < 41; ++i)
+//    BOOST_TEST_EQ(const_bt->find(i)->first, i);
+//  BOOST_TEST(const_bt->find(41)==const_bt->end());
+
 
   return report_errors();
 }
