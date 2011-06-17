@@ -18,6 +18,7 @@
 #include <new>
 #include <iterator>
 #include <algorithm>
+#include <ostream>
 #include <boost/cstdint.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/assert.hpp>
@@ -175,6 +176,7 @@ namespace btree {
     key_compare             key_comp() const   {return m_key_compare;}
     value_compare           value_comp() const {return m_value_compare;}
     int                     height() const     {return m_root->height();}  // aids testing and tuning
+    void                    dump_dot(std::ostream& os) const;
 
     // 23.4.4.5, map operations:
     iterator                find(const key_type& x);
@@ -390,6 +392,7 @@ namespace btree {
     iterator  m_special_lower_bound(const key_type& k) const;
     iterator  m_special_upper_bound(const key_type& k) const;
     iterator  m_last();
+    void      m_dump_node(std::ostream& os, node* np) const;
 
     void m_leaf_insert(key_type&& k, mapped_type&& mv,
                   leaf_node*& np, leaf_value*& ep);
@@ -1120,6 +1123,62 @@ find(const key_type& k)
   return (low != end() && !key_comp()(k, low->first))
     ? low
     : end();
+}
+
+//----------------------------------- dump_dot -----------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+void
+mbt_map<Key,T,Compare,Allocator>::
+m_dump_node(std::ostream& os, node* np) const
+{
+  if (np->is_leaf())
+  {
+    leaf_node* lp = node_cast<leaf_node>(np);
+    os << "node_" << lp << "[label = \"<f0> ";
+    for (leaf_value* it = lp->begin(); it != lp->end(); ++it)
+    {
+      if (it != lp->begin())
+        os << '|';
+      os << it->first << ':' << it->second;
+    }
+    os << "\",fillcolor=\"palegreen\"];\n";
+  }
+  else
+  {
+    os << "node_" << np << "[label = \"";
+    branch_node* bp = node_cast<branch_node>(np);
+    int f = 0;
+    branch_value* it;
+    for (it = bp->begin(); it != bp->end(); ++it)
+    {
+      os << "<f" << f << ">|" << it->second << "|";
+      ++f;
+    }
+    os << "<f" << f << ">\",fillcolor=\"lightblue\"];\n";
+    f = 0;
+    for (it = bp->begin(); it != bp->end(); ++it)
+    {
+      os << "\"node_" << bp << "\":f" << f << " -> \"node_" << it->first << "\":f0;\n";
+      m_dump_node(os, it->first);
+      ++f;
+    }
+    os << "\"node_" << bp << "\":f" << f << " -> \"node_" << it->first << "\":f0;\n";
+    m_dump_node(os, it->first);
+  }
+}
+
+template <class Key, class T, class Compare, class Allocator>
+void
+mbt_map<Key,T,Compare,Allocator>::
+dump_dot(std::ostream& os) const
+{
+  os << "digraph btree {\nrankdir=LR;\nfontname=Courier;\n"
+    "node [shape = record,margin=.1,width=.1,height=.1,fontname=Courier,style=\"filled\"];\n";
+
+  m_dump_node(os, m_root);
+
+  os << "}" << std::endl;
 }
 
 //--------------------------------  node::next_node()  ---------------------------------//

@@ -346,41 +346,44 @@ namespace
     cout << "  backward iteration complete" << endl;
   }
 
-//  //  erase test  ----------------------------------------------------------------------//
-//
-//  void erase_test(keygen_t& erase_key)
-//  {
-//    cout << "erase test..." << endl;
-//    if (verbose)
-//      cout << "erasing: ";
-//    while (stl.size() > static_cast<stl_type::size_type>(min))
-//    {
-//      boost::int32_t k = erase_key();
-//
-//      if (verbose)
+  //  erase test  ----------------------------------------------------------------------//
+
+  void erase_test(keygen_t& erase_key)
+  {
+    cout << "erase test..." << endl;
+    if (verbose)
+      cout << "erasing: ";
+    while (stl.size() > static_cast<stl_type::size_type>(min))
+    {
+      boost::int32_t k = erase_key();
+
+      if (verbose)
 //        cout << k << ',';
-//
-//      stl_type::size_type stl_result = stl.erase(k);
-//      bt_type::size_type bt_result = bt.erase(k);
-//
-//      if (stl_result != bt_result)
-//      {
-//        cout << "stl_result " << stl_result << " != bt_result " << bt_result << endl;
-//        throw runtime_error("erase: result failure");
-//      }
-//
-//      if (stl_result)
-//        ++erase_success_count;
-//      else
-//        ++erase_fail_count;
-//    }
-//    if (stl.size() != bt.size())
-//    {
-//      cout << "stl.size() " << stl.size() << " != bt.size() " << bt.size() << endl;
-//      throw runtime_error("erase: size check failure");
-//    }
-//    cout << "  erase test complete, size() = " << stl.size() << endl;
-//  }
+         cout << k << '('<<stl.size()<<')'<<',';
+
+      bt.dump_dot(cout);
+
+      stl_type::size_type stl_result = stl.erase(k);
+      bt_type::size_type bt_result = bt.erase(k);
+
+      if (stl_result != bt_result)
+      {
+        cout << "stl_result " << stl_result << " != bt_result " << bt_result << endl;
+        throw runtime_error("erase: result failure");
+      }
+
+      if (stl_result)
+        ++erase_success_count;
+      else
+        ++erase_fail_count;
+    }
+    if (stl.size() != bt.size())
+    {
+      cout << "stl.size() " << stl.size() << " != bt.size() " << bt.size() << endl;
+      throw runtime_error("erase: size check failure");
+    }
+    cout << "  erase test complete, size() = " << stl.size() << endl;
+  }
 
   //  find test  -----------------------------------------------------------------------//
 
@@ -697,7 +700,7 @@ namespace
       find_test();
       lower_bound_test();
       upper_bound_test();
-//      erase_test(erase_keygen);
+      erase_test(erase_keygen);
 //      iteration_test();
 //      backward_iteration_test();
 //      find_test();
