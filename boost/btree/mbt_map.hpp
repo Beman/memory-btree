@@ -275,6 +275,9 @@ namespace btree {
 
       leaf_value*    begin()                        {return _leaf_values;}
       leaf_value*    end()                          {return _leaf_values + node::_size;}
+
+      static
+        std::size_t  extra_space()                  {return 0;}
      };
 
     //-----------------------------  class branch_node  --------------------------------//
@@ -291,6 +294,9 @@ namespace btree {
       branch_value*  end()                          {return _branch_values + node::_size;}
       // pseudo-element end()->first is valid; b-tree branches have size() + 1
       // child pointers - see your favorite computer science textbook.
+
+      static
+        std::size_t  extra_space()                  {return sizeof(node*);}
     };
 
     //----------------------------------------------------------------------------------//
@@ -433,7 +439,7 @@ Node*
 mbt_map<Key,T,Compare,Allocator>::
 m_new_node(uint16_t height_, size_type max_elements)
 {
-  std::size_t node_size = sizeof(Node)
+  std::size_t node_size = sizeof(Node) + Node::extra_space()
     + (max_elements-1) * sizeof(typename Node::value_type);
 
   Node* np = reinterpret_cast<Node*>(new char[node_size]);

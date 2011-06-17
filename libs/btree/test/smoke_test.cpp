@@ -282,12 +282,21 @@ int cpp_main(int, char*[])
   map::size_type old_sz = bt.size();
   map::size_type ct = bt.erase(20);
   BOOST_TEST_EQ(ct, 1U);
-  BOOST_TEST_EQ(bt.size(), old_sz-1);
+  --old_sz;
+  BOOST_TEST_EQ(bt.size(), old_sz);
 
-//  for (int i = 1; i < 41; ++i)
-//    BOOST_TEST_EQ(const_bt->find(i)->first, i);
-//  BOOST_TEST(const_bt->find(41)==const_bt->end());
-
+  BOOST_TEST(bt.height() > 1);  // make sure test covers several branch levels
+  for (int i = 1; i <= int(old_sz); ++i)
+  {
+//    cout << i << endl;
+    bt.erase(i);
+  }
+  for (itr = bt.begin(); itr != bt.end(); ++itr)
+  {
+    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+  }
+  BOOST_TEST_EQ(bt.size(), 1U);
+  BOOST_TEST_EQ(bt.height(), 0U);
 
   return report_errors();
 }
