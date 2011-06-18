@@ -9,6 +9,7 @@
 #ifdef BOOST_MSVC
 #  pragma warning(push)
 #  pragma warning(disable: 4996)  // ... Function call with parameters that may be unsafe
+#  pragma warning(disable: 4200)  // nonstandard extension used : zero-sized array in struct/union
 #endif
 
 #include <cstddef>
@@ -273,7 +274,7 @@ namespace btree {
       typedef typename mbt_map::leaf_value   value_type;
       typedef typename mbt_map::mapped_type  mapped_type;
 
-      leaf_value     _leaf_values[1];               // actual size determined at runtime
+      leaf_value     _leaf_values[];                // actual size determined at runtime
 
       leaf_value*    begin()                        {return _leaf_values;}
       leaf_value*    end()                          {return _leaf_values + node::_size;}
@@ -290,7 +291,7 @@ namespace btree {
       typedef typename mbt_map::branch_value  value_type;
       typedef node*                           mapped_type;
 
-      branch_value   _branch_values[1];             // actual size determined at runtime
+      branch_value   _branch_values[];              // actual size determined at runtime
 
       branch_value*  begin()                        {return _branch_values;}
       branch_value*  end()                          {return _branch_values + node::_size;}
@@ -407,7 +408,7 @@ namespace btree {
     //           (old_np->parent_element()+1)->first, respectively
     // Postcondition: For the nodes pointed to by old_np and new_np, parent_node() and
     //           parent_element() are valid. i.e. updated if needed
-    
+
     void m_erase_from_parent(node* child);
 
     template <class Node>
@@ -427,11 +428,37 @@ namespace btree {
 
 //----------------------------------  ~mbt_map()  --------------------------------------//
 
+//template <class Key, class T, class Compare, class Allocator>
+//void
+//mbt_map<Key,T,Compare,Allocator>::
+//m_destroy(node* np) const
+//{
+//  if (np->is_leaf())
+//  {
+//    leaf_node* lp = node_cast<leaf_node>(np);
+//    for (leaf_value* it = lp->begin(); it != lp->end(); ++it)
+//    {
+//      it->first.~key_type();
+//    }
+//  }
+//  else
+//  {
+//    branch_node* bp = node_cast<branch_node>(np);
+//    branch_value* it;
+//    for (it = bp->begin(); it != bp->end(); ++it)
+//    {
+//      m_destroy(it->first);
+//      it->second.~key_type();
+//    }
+//    m_destroy(it->first);
+//  }
+//}
+
 template <class Key, class T, class Compare, class Allocator>
 mbt_map<Key,T,Compare,Allocator>::
 ~mbt_map()
 {
-  // TODO ...
+  //m_destroy(m_root);
 }
 
 //----------------------------------  m_new_node  --------------------------------------//
@@ -443,7 +470,7 @@ mbt_map<Key,T,Compare,Allocator>::
 m_new_node(uint16_t height_, size_type max_elements)
 {
   std::size_t node_size = sizeof(Node) + Node::extra_space()
-    + (max_elements-1) * sizeof(typename Node::value_type);
+    + max_elements * sizeof(typename Node::value_type);
 
   Node* np = reinterpret_cast<Node*>(new char[node_size]);
 #ifndef NDEBUG
@@ -871,7 +898,7 @@ erase(const_iterator pos)
     pos.m_node->size(pos.m_node->size()-1);
     pos.m_node->end()->first.~key_type();
     pos.m_node->end()->second.~mapped_type();
-    
+
     if (pos.m_element != pos.m_node->end())
       return iterator(pos.m_node, pos.m_element);
 
@@ -880,7 +907,7 @@ erase(const_iterator pos)
   }
 }
 // [note 1] the call to m_erase_parent() may change the root, so build the next iterator
-//          before the call to m_erase_parent() 
+//          before the call to m_erase_parent()
 
 //------------------------------ m_erase_branch_value() --------------------------------//
 
