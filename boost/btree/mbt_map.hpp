@@ -857,9 +857,10 @@ erase(const_iterator pos)
   {
     // erase a single value leaf node that is not the root
     leaf_node* nxt (pos.m_node->next_node<leaf_node>());
+    iterator nxt_it (nxt->is_root() ? end() : iterator(nxt, nxt->begin()));  // [note 1]
     m_erase_from_parent(pos.m_node);  // unlink from tree
     m_free_node(pos.m_node);
-    return !nxt->is_root() ? iterator(nxt, nxt->begin()) : end();
+    return nxt_it;
   }
   else
   {
@@ -878,6 +879,8 @@ erase(const_iterator pos)
     return nxt->is_root() ? end() : iterator(nxt, nxt->begin());
   }
 }
+// [note 1] the call to m_erase_parent() may change the root, so build the next iterator
+//          before the call to m_erase_parent() 
 
 //------------------------------ m_erase_branch_value() --------------------------------//
 
@@ -912,18 +915,22 @@ m_erase_from_parent(node* child)
     return;
   }
 
-  if (ep != np->begin())
-  // Process erase of element other than the first element (ie preserve branch invariants)
-  // Example 2: erase with ep pointing to element 2,B below
-  // Branch:        1,A 2,B 3,C 4,D 5
-  // Postcondition: 1,B 3,C 4,D 5
+  if (ep != np->end())
   {
-    (ep-1)->second = std::move(ep->second);
+    if (ep != np->begin())
+    // Process erase of element other than the first element (ie preserve branch invariants)
+    // Example 2: erase with ep pointing to element 2:B below
+    // Branch:        1:A 2:B 3:C 4:D 5
+    // Postcondition: 1:B 3:C 4:D 5
+    {
+      (ep-1)->second = std::move(ep->second);
+    }
+
+    std::move(ep+1, np->end(), ep);
+    (np->end()-1)->first = np->end()->first;
   }
 
-  // common processing of non-empty nodes
-  std::move(ep+1, np->end(), np->begin());
-  (np->end()-1)->first = np->end()->first;
+  // common processing for all non-empty nodes
   (np->end()-1)->second.~key_type();
   np->size(np->size()-1);
 

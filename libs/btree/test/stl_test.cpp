@@ -358,10 +358,7 @@ namespace
       boost::int32_t k = erase_key();
 
       if (verbose)
-//        cout << k << ',';
-         cout << k << '('<<stl.size()<<')'<<',';
-
-      bt.dump_dot(cout);
+        cout << k << ',';
 
       stl_type::size_type stl_result = stl.erase(k);
       bt_type::size_type bt_result = bt.erase(k);
