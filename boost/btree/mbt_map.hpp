@@ -30,7 +30,7 @@
 /*
 TODO:
 
-  * Implement ~mbt_map() and clear()
+  * Implement clear()
 
   * new_node() should use allocator!
 
@@ -104,7 +104,7 @@ namespace btree {
 
     template <class InputIterator>
       mbt_map(InputIterator first, InputIterator last,
-      const Compare& comp = Compare(), const Allocator& = Allocator());
+        const Compare& comp = Compare(), const Allocator& = Allocator());
     mbt_map(const mbt_map<Key,T,Compare,Allocator>& x);
     mbt_map(mbt_map<Key,T,Compare,Allocator>&& x);
     explicit mbt_map(const Allocator&);
@@ -112,7 +112,7 @@ namespace btree {
     mbt_map(mbt_map&&, const Allocator&);
 //    mbt_map(initializer_list<value_type>, const Compare& = Compare(),
 //      const Allocator& = Allocator());
-   ~mbt_map();
+   ~mbt_map()                                                {m_free_all(m_root);}
     mbt_map<Key,T,Compare,Allocator>&
       operator=(const mbt_map<Key,T,Compare,Allocator>& x);
     mbt_map<Key,T,Compare,Allocator>&
@@ -389,10 +389,12 @@ namespace btree {
       m_root->owner(this);
     }
 
+    void      m_free_all(node* np);
     void      m_new_root();
     iterator  m_special_lower_bound(const key_type& k) const;
     iterator  m_special_upper_bound(const key_type& k) const;
     iterator  m_last();
+    void      m_erase_from_parent(node* child);
     void      m_dump_node(std::ostream& os, node* np) const;
 
     void m_leaf_insert(key_type&& k, mapped_type&& mv,
@@ -409,8 +411,6 @@ namespace btree {
     // Postcondition: For the nodes pointed to by old_np and new_np, parent_node() and
     //           parent_element() are valid. i.e. updated if needed
 
-    void m_erase_from_parent(node* child);
-
     template <class Node>
     Node*     m_new_node(uint16_t height_, size_type max_elements);
 
@@ -426,39 +426,25 @@ namespace btree {
 //                                  implementation                                      //
 //--------------------------------------------------------------------------------------//
 
-//----------------------------------  ~mbt_map()  --------------------------------------//
-
-//template <class Key, class T, class Compare, class Allocator>
-//void
-//mbt_map<Key,T,Compare,Allocator>::
-//m_destroy(node* np) const
-//{
-//  if (np->is_leaf())
-//  {
-//    leaf_node* lp = node_cast<leaf_node>(np);
-//    for (leaf_value* it = lp->begin(); it != lp->end(); ++it)
-//    {
-//      it->first.~key_type();
-//    }
-//  }
-//  else
-//  {
-//    branch_node* bp = node_cast<branch_node>(np);
-//    branch_value* it;
-//    for (it = bp->begin(); it != bp->end(); ++it)
-//    {
-//      m_destroy(it->first);
-//      it->second.~key_type();
-//    }
-//    m_destroy(it->first);
-//  }
-//}
+//----------------------------------  free_all()  --------------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>
+void
 mbt_map<Key,T,Compare,Allocator>::
-~mbt_map()
+m_free_all(node* np)
 {
-  //m_destroy(m_root);
+  if (np->is_leaf())
+    m_free_node<leaf_node>(node_cast<leaf_node>(np));
+  else
+  {
+    branch_node* bp = node_cast<branch_node>(np);
+    branch_value* it;
+    for (it = bp->begin(); it <= bp->end(); ++it)
+    {
+      m_free_all(it->first);
+    }
+    m_free_node<branch_node>(bp);
+  }
 }
 
 //----------------------------------  m_new_node  --------------------------------------//
@@ -496,7 +482,7 @@ m_free_node(Node* np)
   {
     it->~value_type();
   }
-  delete [] np;
+  delete [] reinterpret_cast<char*>(np);
 }
 
 //----------------------------------  m_begin()  ---------------------------------------//

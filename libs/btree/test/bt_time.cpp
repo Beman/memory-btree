@@ -168,30 +168,30 @@ namespace
 //        cout << '\n' << bt << endl;
 //        cout << bt.manager() << endl;
 //      }
-//
-//      if (do_erase)
-//      {
-//        cout << "\nerasing " << n << " btree elements..." << endl;
-//        rng.seed(seed);
-//        t.start();
-//        for (long i = 1; i <= n; ++i)
-//        {
-//          if (lg && i % lg == 0)
-//            std::cout << i << std::endl;
-//          //long k = key();
-//          //if (i >= n - 5)
-//          //{
-//          //  std::cout << i << ' ' << k << ' ' << bt.size() << std::endl;
-//          //  std::cout << "erase(k) returns " << bt.erase(k) << std::endl;
-//          //  std::cout << "and size() returns " << bt.size() << std::endl;
-//          //}
-//          //else
-//          //  bt.erase(k);
-//          bt.erase(key());
-//        }
-//        erase_tm = t.stop();
-//        t.report();
-//      }
+
+      if (do_erase)
+      {
+        cout << "\nerasing " << n << " btree elements..." << endl;
+        rng.seed(seed);
+        t.start();
+        for (long i = 1; i <= n; ++i)
+        {
+          if (lg && i % lg == 0)
+            std::cout << i << std::endl;
+          //long k = key();
+          //if (i >= n - 5)
+          //{
+          //  std::cout << i << ' ' << k << ' ' << bt.size() << std::endl;
+          //  std::cout << "erase(k) returns " << bt.erase(k) << std::endl;
+          //  std::cout << "and size() returns " << bt.size() << std::endl;
+          //}
+          //else
+          //  bt.erase(k);
+          bt.erase(key());
+        }
+        erase_tm = t.stop();
+        t.report();
+      }
 
       cout << "B-tree timing complete" << endl;
 
@@ -333,37 +333,37 @@ namespace
       if (count != stl.size())
         throw std::runtime_error("stl iteration count error");
 
-//      cout << "\nerasing " << n << " std::map elements..." << endl;
-//      rng.seed(seed);
-//      t.start();
-//      for (long i = 1; i <= n; ++i)
-//      {
-//        if (lg && i % lg == 0)
-//          std::cout << i << std::endl;
-//        stl.erase(key());
-//      }
-//      this_tm = t.stop();
-//      t.report();
-//      if (html)
-//      {
-//        if (this_tm.wall)
-//        {
-//          double ratio = ratio_of(erase_tm.wall, this_tm.wall);
-//          if (ratio < 1.0)
-//            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
-//                 << erase_tm.wall / sec << " sec<br>"
-//                 << ratio << " ratio</td>\n</tr>\n";
-//          else
-//            cerr << "  <td align=\"right\">"
-//                 << erase_tm.wall / sec << " sec<br>"
-//                 << ratio << " ratio</td>\n</tr>\n";
-//        }
-//        else
-//          cerr << "  <td align=\"right\">N/A</td>\n</tr>  <td align=\"right\">N/A</td>\n</tr>\n";
-//      }
-//      if (this_tm.wall)
-//        cout << "  " << ratio_type() << " wall clock time: "
-//             << (erase_tm.wall * 1.0) / this_tm.wall << '\n';
+      cout << "\nerasing " << n << " std::map elements..." << endl;
+      rng.seed(seed);
+      t.start();
+      for (long i = 1; i <= n; ++i)
+      {
+        if (lg && i % lg == 0)
+          std::cout << i << std::endl;
+        stl.erase(key());
+      }
+      this_tm = t.stop();
+      t.report();
+      if (html)
+      {
+        if (this_tm.wall)
+        {
+          double ratio = ratio_of(erase_tm.wall, this_tm.wall);
+          if (ratio < 1.0)
+            cerr << "  <td align=\"right\" bgcolor=\"#99FF66\">"
+                 << erase_tm.wall / sec << " sec<br>"
+                 << ratio << " ratio</td>\n</tr>\n";
+          else
+            cerr << "  <td align=\"right\">"
+                 << erase_tm.wall / sec << " sec<br>"
+                 << ratio << " ratio</td>\n</tr>\n";
+        }
+        else
+          cerr << "  <td align=\"right\">N/A</td>\n</tr>  <td align=\"right\">N/A</td>\n</tr>\n";
+      }
+      if (this_tm.wall)
+        cout << "  " << ratio_type() << " wall clock time: "
+             << (erase_tm.wall * 1.0) / this_tm.wall << '\n';
 //      if (verbose && this_tm.system + this_tm.user)
 //        cout << "  " << ratio_type() << " cpu time: "
 //             << ((erase_tm.system + erase_tm.user) * 1.0)

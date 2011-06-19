@@ -29,8 +29,13 @@ namespace archetype_count
 
   int sum()
   {
-    return default_construct+construct+copy_construct
-      +move_construct+destruct+copy_assign+move_assign;
+    return default_construct + construct + copy_construct
+      +move_construct + destruct + copy_assign + move_assign;
+  }
+
+  int all_constructors()
+  {
+    return default_construct + construct + copy_construct + move_construct;
   }
 
   void clear()

@@ -12,6 +12,7 @@
 #include <boost/btree/mbt_map.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/btree/detail/archetype.hpp>
+#include <boost/type_traits/alignment_of.hpp>
 #include <utility>
 
 #include <boost/test/included/prg_exec_monitor.hpp>
@@ -35,39 +36,49 @@ namespace
     cout << "archetype test" << endl;
 
     typedef btree::mbt_map<archetype, long, archetype_compare> map;
-    map bt(64);
 
-    std::pair<const archetype, long> v1(archetype(1), 1*100);
-    archetype_count::clear();
-    bt.insert(v1);
-//    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
-//    BOOST_TEST_EQ(archetype_count::sum(), 1);
-    //cout << '\n';
-    //archetype_count::dump(cout);
+    cout << "  alignment_of<archetype> is " << boost::alignment_of<archetype>::value << endl;
+    cout << "  alignment_of<map::value_type> is " << boost::alignment_of<map::value_type>::value << endl;
 
-    std::pair<const archetype, long> v3(archetype(3), 3*100);
-    //archetype_count::clear();
-    bt.insert(v3);
-    //cout << '\n';
-    //archetype_count::dump(cout);
-
-    std::pair<const archetype, long> v2(archetype(2), 2*100);
-    //archetype_count::clear();
-    bt.insert(v2);
-    cout << '\n';
-    //archetype_count::dump(cout);
-    //cout << endl;
-
-    // insert enough elements to verify archetype asserts don't fire
-    // on branch inserts and splits
-    for (int i = 40; i > 3; --i)
     {
-      std::pair<const archetype, long> x(archetype(i), i*100);
-      bt.insert(x);
+      map empty_bt;
     }
+
+    BOOST_TEST_EQ(archetype_count::sum(), 0);
+    archetype_count::clear();
+
+    {
+      map bt(64);
+
+      std::pair<const archetype, long> v1(archetype(1), 1*100);
+      bt.insert(v1);
+  //    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
+  //    BOOST_TEST_EQ(archetype_count::sum(), 1);
+      cout << '\n';
+      archetype_count::dump(cout);
+
+      std::pair<const archetype, long> v3(archetype(3), 3*100);
+      bt.insert(v3);
+      cout << '\n';
+      archetype_count::dump(cout);
+
+      std::pair<const archetype, long> v2(archetype(2), 2*100);
+      bt.insert(v2);
+      cout << '\n';
+      archetype_count::dump(cout);
+      cout << endl;
+
+      // insert enough elements to verify archetype asserts don't fire
+      // on branch inserts and splits
+      for (int i = 1000; i > 3; --i)
+      {
+        std::pair<const archetype, long> x(archetype(i*1973345679), i);
+        bt.insert(x);
+      }
+    }
+    BOOST_TEST_EQ(archetype_count::all_constructors(), archetype_count::destruct);
     archetype_count::dump(cout);
     cout << endl;
-
   }
 } // unnamed namespace
 
