@@ -5,6 +5,8 @@
 //  Distributed under the Boost Software License, Version 1.0.
 //  See http://www.boost.org/LICENSE_1_0.txt
 
+//  This code is experimental and has not been accepted as a boost.org library
+
 #ifndef BOOST_BTREE_ARCHETYPE_HPP       
 #define BOOST_BTREE_ARCHETYPE_HPP
 

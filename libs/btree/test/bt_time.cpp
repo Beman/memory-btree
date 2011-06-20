@@ -5,7 +5,7 @@
 //  Distributed under the Boost Software License, Version 1.0.
 //  http://www.boost.org/LICENSE_1_0.txt
 
-//  See http://www.boost.org/libs/btree for documentation.
+//  This library is experimental and has not been accepted as a boost.org library
 
 #define BOOST_NO_CONSTEXPR
 
@@ -459,7 +459,7 @@ int cpp_main(int argc, char * argv[])
   cout << "starting tests with node size " << node_sz << "\n";
 
   {
-    cout << "*************************  key_type long tests  ****************************\n";
+    cout << "\n*************************  key_type long tests  ****************************\n";
     rand48  rng;
     uniform_int<long> n_dist(0, n-1);
     variate_generator<rand48&, uniform_int<long> > key(rng, n_dist);
@@ -470,7 +470,7 @@ int cpp_main(int argc, char * argv[])
     test(bt, rng, key);
   }
   {
-    cout << "*************************  key_type string tests  ****************************\n";
+    cout << "\n*************************  key_type string tests  ****************************\n";
     boost::random_string  rng(4, 30, 'a', 'z');
 
     typedef boost::btree::mbt_map<std::string, boost::int32_t> map_type;
