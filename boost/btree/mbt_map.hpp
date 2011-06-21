@@ -39,6 +39,9 @@
 /*
 TODO:
 
+  * Tighten requirements on Key and T to match standard library.
+    Change archetype accordingly.
+
   * new_node() should use allocator!
 
 */

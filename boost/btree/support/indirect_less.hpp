@@ -10,6 +10,8 @@
 #ifndef BOOST_BTREE_INDIRECT_LESS_HPP       
 #define BOOST_BTREE_INDIRECT_LESS_HPP
 
+#include <cstring>
+
 namespace boost
 {
   namespace btree
@@ -20,9 +22,22 @@ namespace boost
       typedef T first_argument_type;
       typedef T second_argument_type;
       typedef bool result_type;
-      bool operator()(T* x, T* y) const
+
+      bool operator()(const T& x, const T& y) const
       {
         return *x < *y;
+      }
+    };
+
+    template <> struct indirect_less<char*>
+    {
+      typedef char* first_argument_type;
+      typedef char* second_argument_type;
+      typedef bool result_type;
+
+      bool operator()(const char* x, const char* y) const
+      {
+        return std::strcmp(x, y) < 0;
       }
     };
 
