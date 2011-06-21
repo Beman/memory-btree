@@ -213,7 +213,7 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(const_bt->lower_bound(0)->first, 1);
   BOOST_TEST_EQ(const_bt->lower_bound(1)->first, 1);
   BOOST_TEST_EQ(const_bt->lower_bound(20)->first, 20);
-  BOOST_TEST_EQ(const_bt->lower_bound(bt.size())->first, bt.size());
+  BOOST_TEST_EQ(const_bt->lower_bound(bt.size())->first, map::key_type(bt.size()));
   BOOST_TEST(const_bt->lower_bound(bt.size()+1)==const_bt->end());
 
   cout << "find test" << endl;
@@ -258,7 +258,7 @@ int cpp_main(int, char*[])
   BOOST_TEST(eq.first->first == 20);
   BOOST_TEST(eq.second->first == 21);
   eq = bt.equal_range(bt.size());
-  BOOST_TEST(eq.first->first == bt.size());
+  BOOST_TEST(eq.first->first == map::key_type(bt.size()));
   BOOST_TEST(eq.second == bt.end());
   eq = bt.equal_range(bt.size()+1);
   BOOST_TEST(eq.first == bt.end());
@@ -276,7 +276,7 @@ int cpp_main(int, char*[])
   BOOST_TEST(const_eq.first->first == 20);
   BOOST_TEST(const_eq.second->first == 21);
   const_eq = const_bt->equal_range(bt.size());
-  BOOST_TEST(const_eq.first->first == bt.size());
+  BOOST_TEST(const_eq.first->first == map::key_type(bt.size()));
   BOOST_TEST(const_eq.second == const_bt->end());
   const_eq = const_bt->equal_range(bt.size()+1);
   BOOST_TEST(const_eq.first == const_bt->end());
@@ -315,7 +315,7 @@ int cpp_main(int, char*[])
     std::cout << "  " << itr->first << ", " << itr->second << std::endl;
   }
   BOOST_TEST_EQ(bt.size(), 1U);
-  BOOST_TEST_EQ(bt.height(), 0U);
+  BOOST_TEST_EQ(bt.height(), 0);
 
   return report_errors();
 }

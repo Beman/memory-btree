@@ -29,6 +29,7 @@
 #include <iterator>
 #include <algorithm>
 #include <ostream>
+#include <stdexcept>
 #include <boost/cstdint.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/assert.hpp>
@@ -55,7 +56,7 @@ namespace btree {
 //                                                                                      //
 //  "mbt_bree" is a placeholder name for an in-memory B+tree map class that is similar  //
 //  to std::map. The primary difference is that all insert, emplace, and erase          //
-//  operations may (and usually do) invalidate iterators.                               //                     // 
+//  operations may (and usually do) invalidate iterators.                               //                     //
 //                                                                                      //
 //--------------------------------------------------------------------------------------//
 
@@ -253,6 +254,7 @@ private:
 
   class node
   {
+    friend class mbt_map;
   public:
     uint16_t        _height;          // 0 for a leaf node
     uint16_t        _size;
@@ -279,11 +281,13 @@ private:
     void          parent_element(branch_value* p) {_parent_element = p;}
     void          owner(mbt_map* o)               {_owner = o;}
 
+    // GCC 4.5.2 only worked on these functions when the type was deduced - thus the
+    // unused function argument
     template <class Node>
-    Node* next_node();  // returns next node at same height; root node if end
+    Node* next_node(Node*);  // returns next node at same height; root node if end
 
     template <class Node>
-    Node* prior_node();  // returns prior node at same height; root node if end
+    Node* prior_node(Node*);  // returns prior node at same height; root node if end
   };
 
   //------------------------------  class leaf_node  ---------------------------------//
@@ -889,7 +893,7 @@ erase(const_iterator pos)
     && (pos.m_node->size() == 1))  // only 1 element on node?
   {
     // erase a single value leaf node that is not the root
-    leaf_node* nxt (pos.m_node->next_node<leaf_node>());
+    leaf_node* nxt (pos.m_node->next_node(pos.m_node));
     iterator nxt_it (nxt->is_root() ? end() : iterator(nxt, nxt->begin()));  // [note 1]
     m_erase_from_parent(pos.m_node);  // unlink from tree
     m_free_node(pos.m_node);
@@ -908,7 +912,7 @@ erase(const_iterator pos)
     if (pos.m_element != pos.m_node->end())
       return iterator(pos.m_node, pos.m_element);
 
-    leaf_node* nxt (pos.m_node->next_node<leaf_node>());
+    leaf_node* nxt (pos.m_node->next_node(pos.m_node));
     return nxt->is_root() ? end() : iterator(nxt, nxt->begin());
   }
 }
@@ -1100,7 +1104,7 @@ lower_bound(const key_type& k)
   }
 
   // lower bound is first element on next node
-  leaf_node* np = low.m_node->next_node<leaf_node>();
+  leaf_node* np = low.m_node->next_node(low.m_node);
   return !np->is_root() ? iterator(np, np->begin()) : end();
 }
 
@@ -1148,7 +1152,7 @@ upper_bound(const key_type& k)
     return up;
 
   // upper bound is first element on next node
-  leaf_node* np = up.m_node->next_node<leaf_node>();
+  leaf_node* np = up.m_node->next_node(up.m_node);
   return !np->is_root() ? iterator(np, np->begin()) : end();
 }
 
@@ -1227,7 +1231,7 @@ template <class Key, class T, class Compare, class Allocator>
 template <class Node>
 Node*
 mbt_map<Key,T,Compare,Allocator>::node::
-next_node()  // return next node at same height, root_node if end
+next_node(Node*)  // return next node at same height, root_node if end
 {
   if (this->is_root())
     return node_cast<Node>(this);
@@ -1239,7 +1243,7 @@ next_node()  // return next node at same height, root_node if end
     ++parent_ep;
   else
   {
-    parent_np = this->parent_node()->next_node<branch_node>();
+    parent_np = this->parent_node()->next_node(parent_np);
     if (parent_np->is_root())
       return node_cast<Node>(parent_np);
     parent_ep = parent_np->begin();
@@ -1268,7 +1272,7 @@ increment()
   if (++m_element != m_node->end())
     return;
 
-  m_node = m_node->next_node<leaf_node>();  // next leaf node, or root node if end
+  m_node = m_node->next_node(m_node);  // next leaf node, or root node if end
 
   if (!m_node->is_root())
   {
@@ -1288,7 +1292,7 @@ template <class Key, class T, class Compare, class Allocator>
 template <class Node>
 Node*
 mbt_map<Key,T,Compare,Allocator>::node::
-prior_node()  // return prior node at same height, root_node if end
+prior_node(Node*)  // return prior node at same height, root_node if end
 {
   if (this->is_root())
     return node_cast<Node>(this);
@@ -1300,7 +1304,7 @@ prior_node()  // return prior node at same height, root_node if end
     --parent_ep;
   else
   {
-    parent_np = this->parent_node()->prior_node<branch_node>();
+    parent_np = this->parent_node()->prior_node(parent_np);
     if (parent_np->is_root())
       return node_cast<Node>(parent_np);
     parent_ep = parent_np->end();
@@ -1328,7 +1332,7 @@ decrement()
     --m_element;
   else  // not on this node
   {
-    m_node = m_node->prior_node<leaf_node>();
+    m_node = m_node->prior_node(m_node);
 
     if (m_node->is_root())  // precondition violation, so all bets are off
     {
