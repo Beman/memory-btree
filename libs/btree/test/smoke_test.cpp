@@ -296,7 +296,46 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(bt.size(), sz+1);
   BOOST_TEST_EQ(bt.find(key)->second, key*1000);
 
-  cout << "erase by key test" << endl;
+  cout << "copy construction test" << endl;
+
+  map bt2(bt);
+  BOOST_TEST_EQ(bt.size(), bt2.size());
+  BOOST_TEST(bt == bt2);
+  BOOST_TEST(!(bt != bt2));
+  BOOST_TEST(!(bt < bt2));
+  BOOST_TEST( bt <= bt2);
+  BOOST_TEST(!(bt > bt2));
+  BOOST_TEST(bt >= bt2);
+
+  cout << "relational test" << endl;
+
+  bt2.erase(--bt2.end());
+  BOOST_TEST_EQ(bt.size()-1, bt2.size());
+  BOOST_TEST(bt != bt2);
+  BOOST_TEST(!(bt == bt2));
+  BOOST_TEST(!(bt < bt2));
+  BOOST_TEST(!(bt <= bt2));
+  BOOST_TEST(bt > bt2);
+  BOOST_TEST(bt >= bt2);
+
+  cout << "range construction test" << endl;
+
+  map bt3(bt.begin(), bt.end());
+  BOOST_TEST_EQ(bt.size(), bt3.size());
+  BOOST_TEST(bt == bt3);
+ 
+  cout << "move construction test" << endl;
+
+  cout << "copy assignment test" << endl;
+  
+  map bt5;
+  bt5 = bt;
+  BOOST_TEST_EQ(bt.size(), bt5.size());
+  BOOST_TEST(bt == bt5);
+
+  cout << "move assignment test" << endl;
+
+  cout << "erase test" << endl;
 
   map::size_type old_sz = bt.size();
   map::size_type ct = bt.erase(20);
@@ -310,11 +349,17 @@ int cpp_main(int, char*[])
 //    cout << i << endl;
     bt.erase(i);
   }
-  for (itr = bt.begin(); itr != bt.end(); ++itr)
-  {
-    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
-  }
+  //for (itr = bt.begin(); itr != bt.end(); ++itr)
+  //{
+  //  std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+  //}
   BOOST_TEST_EQ(bt.size(), 1U);
+  BOOST_TEST_EQ(bt.height(), 0);
+
+  cout << "clear test" << endl;
+
+  bt.clear();
+  BOOST_TEST_EQ(bt.size(), 0U);
   BOOST_TEST_EQ(bt.height(), 0);
 
   return report_errors();
