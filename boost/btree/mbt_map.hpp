@@ -493,8 +493,8 @@ private:
 template <class Key, class T, class Compare, class Allocator>
 mbt_map<Key,T,Compare,Allocator>::
 mbt_map(size_type node_sz, const Compare& comp, const Allocator& alloc)
-    : m_key_compare(comp), m_value_compare(comp), m_branch_value_compare(comp),
-      m_alloc(alloc), m_node_size(node_sz)
+    : m_node_size(node_sz), m_key_compare(comp), m_value_compare(comp),
+      m_branch_value_compare(comp), m_alloc(alloc)
 {
   m_init();
  }
@@ -506,8 +506,8 @@ template <class InputIterator>
 mbt_map<Key,T,Compare,Allocator>::
 mbt_map(InputIterator first, InputIterator last,
         size_type node_sz, const Compare& comp, const Allocator& alloc)
-    : m_key_compare(comp), m_value_compare(comp), m_branch_value_compare(comp),
-      m_alloc(alloc), m_node_size(node_sz)
+    : m_node_size(node_sz), m_key_compare(comp), m_value_compare(comp),
+      m_branch_value_compare(comp), m_alloc(alloc)
 {
   m_init();
 
@@ -520,11 +520,9 @@ mbt_map(InputIterator first, InputIterator last,
 template <class Key, class T, class Compare, class Allocator>
 mbt_map<Key,T,Compare,Allocator>::
 mbt_map(const mbt_map<Key,T,Compare,Allocator>& x)
-  : m_key_compare(x.key_comp()),
-    m_value_compare(x.key_comp()),
-    m_branch_value_compare(x.key_comp()),
-    m_alloc(x.get_allocator()),
-    m_node_size(x.node_size())
+  : m_node_size(x.node_size()), m_key_compare(x.key_comp()),
+    m_value_compare(x.key_comp()), m_branch_value_compare(x.key_comp()),
+    m_alloc(x.get_allocator())
 {
   m_init();
 
@@ -536,12 +534,10 @@ mbt_map(const mbt_map<Key,T,Compare,Allocator>& x)
 
 template <class Key, class T, class Compare, class Allocator>
 mbt_map<Key,T,Compare,Allocator>::
-mbt_map(mbt_map<Key,T,Compare,Allocator>&& x) 
-  : m_key_compare(x.key_comp()),
-    m_value_compare(x.key_comp()),
-    m_branch_value_compare(x.key_comp()),
-    m_alloc(x.get_allocator()),
-    m_node_size(x.node_size())
+mbt_map(mbt_map<Key,T,Compare,Allocator>&& x)
+  : m_node_size(x.node_size()), m_key_compare(x.key_comp()),
+    m_value_compare(x.key_comp()), m_branch_value_compare(x.key_comp()),
+    m_alloc(x.get_allocator())
 {
   m_init();
   swap(x);
@@ -599,9 +595,9 @@ swap(mbt_map<Key,T,Compare,Allocator>&x)
   std::swap(m_branch_value_compare, x.m_branch_value_compare);
   std::swap(m_alloc, x.m_alloc);
   std::swap(m_node_size, x.m_node_size);
-  std::swap(m_size, x.m_size);             
-  std::swap(m_max_leaf_size, x.m_max_leaf_size);    
-  std::swap(m_max_branch_size, x.m_max_branch_size);  
+  std::swap(m_size, x.m_size);
+  std::swap(m_max_leaf_size, x.m_max_leaf_size);
+  std::swap(m_max_branch_size, x.m_max_branch_size);
   std::swap(m_root, x.m_root);
   std::swap(m_root->_owner, x.m_root->_owner);
 }

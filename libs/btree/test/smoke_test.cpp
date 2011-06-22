@@ -187,7 +187,7 @@ int cpp_main(int, char*[])
   map::const_iterator itr;
   for (itr = bt.begin(); itr != bt.end(); ++itr)
   {
-    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+//    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
     ++loop_counter;
     itr_checksum += itr->first;
     loop_checksum += loop_counter;
@@ -314,7 +314,7 @@ int cpp_main(int, char*[])
   itr_checksum = 0;
   for (itr = bt2.begin(); itr != bt2.end(); ++itr)
   {
-    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+//    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
     itr_checksum += itr->first;
   }
   BOOST_TEST_EQ(itr_checksum, loop_checksum);
