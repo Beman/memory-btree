@@ -241,6 +241,7 @@ public:
   key_compare             key_comp() const   {return m_key_compare;}
   value_compare           value_comp() const {return m_value_compare;}
   allocator_type          get_allocator() const BOOST_NOEXCEPT {return m_alloc;}
+  size_type               node_size() const BOOST_NOEXCEPT {return m_node_size;}
   int                     height() const     {return m_root->height();}  // aids testing, tuning
   void                    dump_dot(std::ostream& os) const;
 
@@ -435,6 +436,7 @@ private:
   size_type             m_max_leaf_size;    // maximum number of elements
   size_type             m_max_branch_size;  // maximum number of elements
   node*                 m_root;             // invariant: there is always a root
+  size_type             m_node_size;
   key_compare           m_key_compare;
   value_compare         m_value_compare;
   branch_value_compare  m_branch_value_compare;
@@ -448,7 +450,7 @@ private:
 
   branch_value_compare   branch_comp() const {return m_branch_value_compare;}
 
-  void      m_init(std::size_t node_sz);
+  void      m_init();
   void      m_free_all(node* np);
   void      m_new_root();
   iterator  m_special_lower_bound(const key_type& k) const;
@@ -492,9 +494,9 @@ template <class Key, class T, class Compare, class Allocator>
 mbt_map<Key,T,Compare,Allocator>::
 mbt_map(size_type node_sz, const Compare& comp, const Allocator& alloc)
     : m_key_compare(comp), m_value_compare(comp), m_branch_value_compare(comp),
-      m_alloc(alloc)
+      m_alloc(alloc), m_node_size(node_sz)
 {
-  m_init(node_sz);
+  m_init();
  }
 
 //------------------------------  range constructor  -----------------------------------//
@@ -505,9 +507,9 @@ mbt_map<Key,T,Compare,Allocator>::
 mbt_map(InputIterator first, InputIterator last,
         size_type node_sz, const Compare& comp, const Allocator& alloc)
     : m_key_compare(comp), m_value_compare(comp), m_branch_value_compare(comp),
-      m_alloc(alloc)
+      m_alloc(alloc), m_node_size(node_sz)
 {
-  m_init(node_sz);
+  m_init();
 
   for (; first != last; ++first)
     insert(*first);
@@ -521,9 +523,10 @@ mbt_map(const mbt_map<Key,T,Compare,Allocator>& x)
   : m_key_compare(x.key_comp()),
     m_value_compare(x.key_comp()),
     m_branch_value_compare(x.key_comp()),
-    m_alloc(Allocator())
+    m_alloc(x.get_allocator()),
+    m_node_size(x.node_size())
 {
-  m_init(default_node_size);
+  m_init();
 
   for (const_iterator it = x.begin(); it != x.end(); ++it)
     insert(*it);
@@ -537,9 +540,10 @@ mbt_map(mbt_map<Key,T,Compare,Allocator>&& x)
   : m_key_compare(x.key_comp()),
     m_value_compare(x.key_comp()),
     m_branch_value_compare(x.key_comp()),
-    m_alloc(x.get_allocator())
+    m_alloc(x.get_allocator()),
+    m_node_size(x.node_size())
 {
-  m_init(default_node_size);
+  m_init();
   swap(x);
 }
 
@@ -574,11 +578,11 @@ operator=(mbt_map<Key,T,Compare,Allocator>&& x)
 template <class Key, class T, class Compare, class Allocator>
 void
 mbt_map<Key,T,Compare,Allocator>::
-m_init(std::size_t node_sz)
+m_init()
 {
   m_size = 0;
-  m_max_leaf_size = node_sz / sizeof(leaf_value);
-  m_max_branch_size = node_sz / sizeof(branch_value);
+  m_max_leaf_size = node_size() / sizeof(leaf_value);
+  m_max_branch_size = node_size() / sizeof(branch_value);
   m_root = m_new_node<leaf_node>(0U, m_max_leaf_size);
   m_root->owner(this);
 }
@@ -594,6 +598,7 @@ swap(mbt_map<Key,T,Compare,Allocator>&x)
   std::swap(m_value_compare, x.m_value_compare);
   std::swap(m_branch_value_compare, x.m_branch_value_compare);
   std::swap(m_alloc, x.m_alloc);
+  std::swap(m_node_size, x.m_node_size);
   std::swap(m_size, x.m_size);             
   std::swap(m_max_leaf_size, x.m_max_leaf_size);    
   std::swap(m_max_branch_size, x.m_max_branch_size);  
