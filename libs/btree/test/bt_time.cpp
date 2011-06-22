@@ -388,9 +388,9 @@ namespace
         else
           cerr << "  <td align=\"right\">N/A</td>\n</tr>  <td align=\"right\">N/A</td>\n</tr>\n";
       }
-      if (this_tm.wall)
+      if (find_tm.wall && this_tm.wall)
         cout << "  " << ratio_type() << " wall clock time: "
-             << (erase_tm.wall * 1.0) / this_tm.wall << '\n';
+             << ratio_of(erase_tm.wall, this_tm.wall) << '\n';
 //      if (verbose && this_tm.system + this_tm.user)
 //        cout << "  " << ratio_type() << " cpu time: "
 //             << ((erase_tm.system + erase_tm.user) * 1.0)
