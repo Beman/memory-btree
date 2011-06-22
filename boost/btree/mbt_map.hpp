@@ -602,7 +602,8 @@ swap(mbt_map<Key,T,Compare,Allocator>&x)
   std::swap(m_size, x.m_size);             
   std::swap(m_max_leaf_size, x.m_max_leaf_size);    
   std::swap(m_max_branch_size, x.m_max_branch_size);  
-  std::swap(m_root, x.m_root);             
+  std::swap(m_root, x.m_root);
+  std::swap(m_root->_owner, x.m_root->_owner);
 }
 
 //---------------------------------  m_free_all()  -------------------------------------//

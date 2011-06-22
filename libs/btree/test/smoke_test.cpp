@@ -108,10 +108,14 @@ int cpp_main(int, char*[])
 
   cout << "construction test" << endl;
 
-  map bt(48);
+  const std::size_t node_sz = 48;
+
+  map bt(node_sz);
+
   const map* const_bt = &bt;
 
   BOOST_TEST_EQ(bt.size(), 0U);
+  BOOST_TEST_EQ(bt.node_size(), node_sz);
   BOOST_TEST(bt.empty());
   BOOST_TEST_EQ(const_bt->size(), 0U);
   BOOST_TEST(const_bt->empty());
@@ -183,7 +187,7 @@ int cpp_main(int, char*[])
   map::const_iterator itr;
   for (itr = bt.begin(); itr != bt.end(); ++itr)
   {
-//    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
     ++loop_counter;
     itr_checksum += itr->first;
     loop_checksum += loop_counter;
@@ -291,6 +295,7 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(bt.size(), sz);
   BOOST_TEST_EQ(bt.find(key)->second, key*1000);
   key = bt.size()+1;
+  loop_checksum += key;
   BOOST_TEST(bt.find(key) == bt.end());
   bt[key] = key*1000;
   BOOST_TEST_EQ(bt.size(), sz+1);
@@ -306,6 +311,13 @@ int cpp_main(int, char*[])
   BOOST_TEST( bt <= bt2);
   BOOST_TEST(!(bt > bt2));
   BOOST_TEST(bt >= bt2);
+  itr_checksum = 0;
+  for (itr = bt2.begin(); itr != bt2.end(); ++itr)
+  {
+    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+    itr_checksum += itr->first;
+  }
+  BOOST_TEST_EQ(itr_checksum, loop_checksum);
 
   cout << "relational test" << endl;
 
@@ -326,6 +338,12 @@ int cpp_main(int, char*[])
  
   cout << "move construction test" << endl;
 
+  map bt4a(bt);
+  map bt4b(std::move(bt4a));
+  BOOST_TEST_EQ(bt4a.size(), 0U);
+  BOOST_TEST_EQ(bt4b.size(), bt.size());
+  BOOST_TEST(bt4b == bt);
+
   cout << "copy assignment test" << endl;
   
   map bt5;
@@ -334,6 +352,14 @@ int cpp_main(int, char*[])
   BOOST_TEST(bt == bt5);
 
   cout << "move assignment test" << endl;
+
+  map bt6a(bt);
+  map bt6b;
+  bt6b.insert(v1);
+  bt6b = std::move(bt6a);
+  BOOST_TEST_EQ(bt6a.size(), 1U);  // required by implementation rather than specs
+  BOOST_TEST_EQ(bt6b.size(), bt.size());
+  BOOST_TEST(bt6b == bt);
 
   cout << "erase test" << endl;
 
