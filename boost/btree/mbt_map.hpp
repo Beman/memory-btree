@@ -43,7 +43,9 @@ TODO:
   * Tighten requirements on Key and T to match standard library.
     Change archetype accordingly.
 
-  * new_node() should use allocator!
+  * Should use allocators, allocator_traits!
+
+  * Review exception safety.
 
 */
 
@@ -220,6 +222,8 @@ public:
                           insert(const value_type& x);
   std::pair<iterator, bool>
                           insert(value_type&& x);
+  template <class InputIterator>
+    void                  insert(InputIterator first, InputIterator last);
 
 //    template <class P>
 //      std::pair<iterator, bool>
@@ -227,8 +231,6 @@ public:
 //    iterator                insert(const_iterator position, const value_type& x);
 //    template <class P>
 //      iterator              insert(const_iterator position, P&&);
-//    template <class InputIterator>
-//      void                  insert(InputIterator first, InputIterator last);
 //    void                    insert(initializer_list<value_type>);
 
   iterator                erase(const_iterator position);
@@ -830,6 +832,18 @@ insert(value_type&& x)
   m_leaf_insert(std::move(static_cast<key_type>(x.first)), std::move(x.second),
     insert_point.m_node, insert_point.m_element);
   return std::pair<iterator, bool>(insert_point, true);
+}
+
+//-------------------------------  insert() range  -------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+template <class InputIterator>
+void
+mbt_map<Key,T,Compare,Allocator>::
+insert(InputIterator first, InputIterator last)
+{
+  for (; first != last; ++first)
+    insert(*first);
 }
 
 //-------------------------------  m_leaf_insert()  ------------------------------------//

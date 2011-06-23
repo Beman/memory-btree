@@ -361,6 +361,13 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(bt6b.size(), bt.size());
   BOOST_TEST(bt6b == bt);
 
+  cout << "range insert test" << endl;
+  
+  map bt7;
+  bt7.insert(bt.begin(), bt.end());
+  BOOST_TEST_EQ(bt7.size(), bt.size());
+  BOOST_TEST(bt7 == bt);
+
   cout << "erase test" << endl;
 
   map::size_type old_sz = bt.size();
