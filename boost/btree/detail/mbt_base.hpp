@@ -183,7 +183,9 @@ public:
 private:
 
   friend class node;
-
+  typedef typename Base::unique      unique;
+  typedef typename Base::non_unique  non_unique;
+  typedef typename Base::uniqueness  uniqueness;
   typedef typename Base::leaf_value  leaf_value;
   typedef std::pair<node*, Key>      branch_value;  // first is pointer to child node
 
@@ -411,6 +413,15 @@ protected:
   template <class Node>
   static Node* node_cast(node* np) {return reinterpret_cast<Node*>(np);}
 
+  void      m_insert(const value_type& x, unique)  { m_insert_unique(x); }
+  //void      m_insert(const value_type& x, non_unique) { m_insert_non_unique(x); }
+
+  //  mbt_map is the only derived class that provides a public interface to these:
+  mapped_type&        m_op_square_brackets(const Key& x);
+  mapped_type&        m_op_square_brackets(Key&& x);
+  //mapped_type&        at(const Key& x);
+  //const mapped_type&  at(const Key& x) const;
+
 };  // class mbt_base
 
 //--------------------------------------------------------------------------------------//
@@ -441,7 +452,7 @@ mbt_base(InputIterator first, InputIterator last,
   m_init();
 
   for (; first != last; ++first)
-    insert(*first);
+    m_insert(*first, uniqueness());
 }
 
 //-------------------------------  copy constructor  -----------------------------------//
@@ -456,7 +467,7 @@ mbt_base(const mbt_base<Key,Base,Compare,Allocator>& x)
   m_init();
 
   for (const_iterator it = x.begin(); it != x.end(); ++it)
-    insert(*it);
+    m_insert(*it, uniqueness());
 }
 
 //-------------------------------  move constructor  -----------------------------------//
@@ -482,7 +493,7 @@ operator=(const mbt_base<Key,Base,Compare,Allocator>& x)
   clear();
 
   for (const_iterator it = x.begin(); it != x.end(); ++it)
-    insert(*it);
+    m_insert(*it, uniqueness());
 
   return *this;
 }
@@ -656,48 +667,48 @@ m_last()
   return iterator(lp, lp->begin()+(lp->size()-1));
 }
 
-////---------------------------------  operator[]()  -------------------------------------//
-//
-//template <class Key, class Base, class Compare, class Allocator>
-//T&
-//mbt_base<Key,Base,Compare,Allocator>::
-//operator[](const key_type& x)
-//{
-//  iterator it = m_special_lower_bound(x);
-//
-//  bool not_found = it.m_element == it.m_node->end()
-//         || key_comp()(x, it->first)
-//         || key_comp()(it->first, x);
-//
-//  if (not_found)
-//  {
-//    key_type k(x);
-//    m_leaf_insert(std::move(k), T(), it.m_node, it.m_element);
-//  }
-//
-//  return it->second;
-//}
-//
-////-----------------------------  operator[]() r-value ----------------------------------//
-//
-//template <class Key, class Base, class Compare, class Allocator>
-//T&
-//mbt_base<Key,Base,Compare,Allocator>::
-//operator[](key_type&& x)
-//{
-//  iterator it = m_special_lower_bound(x);
-//
-//  bool not_found = it.m_element == it.m_node->end()
-//         || key_comp()(x, it->first)
-//         || key_comp()(it->first, x);
-//
-//  if (not_found)
-//  {
-//    m_leaf_insert(x, T(), it.m_node, it.m_element);
-//  }
-//
-//  return it->second;
-//}
+//-----------------------------  m_op_square_brackets()  -------------------------------//
+
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::mapped_type&
+mbt_base<Key,Base,Compare,Allocator>::
+m_op_square_brackets(const key_type& x)
+{
+  iterator it = m_special_lower_bound(x);
+
+  bool not_found = it.m_element == it.m_node->end()
+         || key_comp()(x, it->first)
+         || key_comp()(it->first, x);
+
+  if (not_found)
+  {
+    key_type k(x);
+    m_leaf_insert(std::move(k), mapped_type(), it.m_node, it.m_element);
+  }
+
+  return it->second;
+}
+
+//-------------------------  m_op_square_brackets() r-value ----------------------------//
+
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::mapped_type&
+mbt_base<Key,Base,Compare,Allocator>::
+m_op_square_brackets(key_type&& x)
+{
+  iterator it = m_special_lower_bound(x);
+
+  bool not_found = it.m_element == it.m_node->end()
+         || key_comp()(x, it->first)
+         || key_comp()(it->first, x);
+
+  if (not_found)
+  {
+    m_leaf_insert(x, mapped_type(), it.m_node, it.m_element);
+  }
+
+  return it->second;
+}
 
 //----------------------------------- m_new_root() -------------------------------------//
 
@@ -760,18 +771,6 @@ m_insert_unique(value_type&& x)
     insert_point.m_node, insert_point.m_element);
   return std::pair<iterator, bool>(insert_point, true);
 }
-
-////-------------------------------  insert() range  -------------------------------------//
-//
-//template <class Key, class Base, class Compare, class Allocator>
-//template <class InputIterator>
-//void
-//mbt_base<Key,Base,Compare,Allocator>::
-//insert(InputIterator first, InputIterator last)
-//{
-//  for (; first != last; ++first)
-//    insert(*first);
-//}
 
 //-------------------------------  m_leaf_insert()  ------------------------------------//
 

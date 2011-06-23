@@ -79,16 +79,19 @@ public:
   template <class InputIterator>
     mbt_map(InputIterator first, InputIterator last,   // range constructor
             size_type node_sz = default_node_size,
-            const Compare& comp = Compare(), const Allocator& = Allocator());
+            const Compare& comp = Compare(), const Allocator& alloc = Allocator())
+      : mbt_base(first, last, node_sz, comp, alloc) {}
 
-  mbt_map(const mbt_map<Key,T,Compare,Allocator>& x);  // copy constructor
+  mbt_map(const mbt_map<Key,T,Compare,Allocator>& x)  // copy constructor
+    : mbt_base(x) {}
 
-  mbt_map(mbt_map<Key,T,Compare,Allocator>&& x);       // move constructor
+  mbt_map(mbt_map<Key,T,Compare,Allocator>&& x)       // move constructor
+    : mbt_base(x) {}
 
-  T&        operator[](const Key& x);
-  T&        operator[](Key&& x);
-  T&        at(const Key& x);
-  const T&  at(const Key& x) const;
+  T&        operator[](const Key& x) {return m_op_square_brackets(x);}
+  T&        operator[](Key&& x)      {return m_op_square_brackets(x);}
+//  T&        at(const Key& x);
+//  const T&  at(const Key& x) const;
 
   std::pair<iterator,bool>  insert(const value_type& x)
     { return m_insert_unique(x); }
@@ -97,8 +100,11 @@ public:
     { return m_insert_unique(x); }
 
   template <class InputIterator>
-  void insert(InputIterator first, InputIterator last)
-    { return m_insert_unique(first, last); }
+    void insert(InputIterator first, InputIterator last)
+  {
+    for (; first != last; ++first)
+      m_insert_unique(*first);
+  }
 
 };
 
@@ -111,13 +117,17 @@ class mbt_map_base
 {
 protected:
   typedef std::pair<Key, T>        leaf_value;
+  class unique{};
+  class non_unique{};
+  typedef unique                   uniqueness;
+
 
 public:
   typedef T                        mapped_type;
   typedef std::pair<const Key, T>  value_type;
 
-  const Key& key(const value_type& v) const  // really handy, so expose
-    {return v.key();}
+  //const Key& key(const value_type& v) const  // really handy, so expose
+  //  {return v.key();}
 
   class value_compare
   {
