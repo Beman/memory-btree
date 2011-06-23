@@ -54,9 +54,9 @@ namespace btree {
 
 //--------------------------------------------------------------------------------------//
 //                                                                                      //
-//                                  class mbt_btree                                     //
+//                                  class mbt_map                                       //
 //                                                                                      //
-//  "mbt_bree" is a placeholder name for an in-memory B+tree map class that is similar  //
+//  "mbt_map" is a placeholder name for an in-memory B+tree set class that is similar   //
 //  to std::map. The primary difference is that all insert, emplace, and erase          //
 //  operations may (and usually do) invalidate iterators.                               //                     //
 //                                                                                      //
@@ -97,7 +97,7 @@ template <class Key, class T, class Compare, class Allocator> inline
     { x.swap(y); }
 
 //--------------------------------------------------------------------------------------//
-//                                  class mbt_btree                                     //
+//                                  class mbt_map                                       //
 //--------------------------------------------------------------------------------------//
 
 template <class Key, class T, class Compare, class Allocator>
