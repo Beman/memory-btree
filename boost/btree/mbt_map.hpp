@@ -86,7 +86,14 @@ public:
     : mbt_base(x) {}
 
   mbt_map(mbt_map<Key,T,Compare,Allocator>&& x)       // move constructor
-    : mbt_base(x) {}
+    : mbt_base() {swap(x);}
+
+  mbt_map<Key,T,Compare,Allocator>&
+  operator=(mbt_map<Key,T,Compare,Allocator>&& x)     // move assignment
+  {
+    swap(x);
+    return *this;
+  }
 
   T&        operator[](const Key& x) {return m_op_square_brackets(x);}
   T&        operator[](Key&& x)      {return m_op_square_brackets(x);}
