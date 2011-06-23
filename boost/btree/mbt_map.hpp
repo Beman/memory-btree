@@ -9,6 +9,7 @@
 
 #ifndef BOOST_MBT_MAP_HPP
 #define BOOST_MBT_MAP_HPP
+
 #include <boost/btree/detail/mbt_base.hpp>
 
 namespace boost {
@@ -59,7 +60,6 @@ template <class Key, class T, class Compare, class Allocator> inline
     { x.swap(y); }
 
 template <class Key, class T, class Compare> class mbt_map_base;
-
 
 //--------------------------------------------------------------------------------------//
 //                                  class mbt_map                                       //
@@ -127,7 +127,6 @@ protected:
   class unique{};
   class non_unique{};
   typedef unique                   uniqueness;
-
 
 public:
   typedef T                        mapped_type;
