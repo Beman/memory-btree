@@ -52,41 +52,41 @@ namespace
       map empty_bt;
     }
 
-  //  BOOST_TEST_EQ(archetype_count::sum(), 0);
-  //  archetype_count::clear();
+    BOOST_TEST_EQ(archetype_count::sum(), 0);
+    archetype_count::clear();
 
-  //  {
-  //    map bt(64);
+    {
+      map bt(64);
 
-  //    std::pair<const archetype, long> v1(archetype(1), 1*100);
-  //    bt.insert(v1);
-  ////    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
-  ////    BOOST_TEST_EQ(archetype_count::sum(), 1);
-  //    cout << '\n';
-  //    archetype_count::dump(cout);
+      std::pair<const archetype, long> v1(archetype(1), 1*100);
+      bt.insert(v1);
+  //    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
+  //    BOOST_TEST_EQ(archetype_count::sum(), 1);
+      cout << '\n';
+      archetype_count::dump(cout);
 
-  //    std::pair<const archetype, long> v3(archetype(3), 3*100);
-  //    bt.insert(v3);
-  //    cout << '\n';
-  //    archetype_count::dump(cout);
+      std::pair<const archetype, long> v3(archetype(3), 3*100);
+      bt.insert(v3);
+      cout << '\n';
+      archetype_count::dump(cout);
 
-  //    std::pair<const archetype, long> v2(archetype(2), 2*100);
-  //    bt.insert(v2);
-  //    cout << '\n';
-  //    archetype_count::dump(cout);
-  //    cout << endl;
+      std::pair<const archetype, long> v2(archetype(2), 2*100);
+      bt.insert(v2);
+      cout << '\n';
+      archetype_count::dump(cout);
+      cout << endl;
 
-  //    // insert enough elements to verify archetype asserts don't fire
-  //    // on branch inserts and splits
-  //    for (int i = 1000; i > 3; --i)
-  //    {
-  //      std::pair<const archetype, long> x(archetype(i*1973345679), i);
-  //      bt.insert(x);
-  //    }
-  //  }
-  //  BOOST_TEST_EQ(archetype_count::all_constructors(), archetype_count::destruct);
-  //  archetype_count::dump(cout);
-  //  cout << endl;
+      // insert enough elements to verify archetype asserts don't fire
+      // on branch inserts and splits
+      for (int i = 1000; i > 3; --i)
+      {
+        std::pair<const archetype, long> x(archetype(i*1973345679), i);
+        bt.insert(x);
+      }
+    }
+    BOOST_TEST_EQ(archetype_count::all_constructors(), archetype_count::destruct);
+    archetype_count::dump(cout);
+    cout << endl;
   }
 } // unnamed namespace
 

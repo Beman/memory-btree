@@ -365,8 +365,10 @@ private:
   allocator_type        m_alloc;
 
   //----------------------------------------------------------------------------------//
-  //                            private member functions                              //
+  //                          protected member functions                              //
   //----------------------------------------------------------------------------------//
+
+protected:
 
   iterator               m_begin() BOOST_NOEXCEPT;
 

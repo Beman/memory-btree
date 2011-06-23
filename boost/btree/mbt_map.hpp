@@ -72,7 +72,9 @@ class mbt_map   // short for memory_btree_map
 public:
 
   explicit mbt_map(size_type node_sz = default_node_size,
-    const Compare& comp = Compare(), const Allocator& alloc = Allocator());
+    const Compare& comp = Compare(), const Allocator& alloc = Allocator())
+      : mbt_base(node_sz, comp, alloc) {}
+
 
   template <class InputIterator>
     mbt_map(InputIterator first, InputIterator last,   // range constructor
@@ -83,17 +85,20 @@ public:
 
   mbt_map(mbt_map<Key,T,Compare,Allocator>&& x);       // move constructor
 
-  T&                      operator[](const Key& x);
-  T&                      operator[](Key&& x);
-  T&                      at(const Key& x);
-  const T&                at(const Key& x) const;
+  T&        operator[](const Key& x);
+  T&        operator[](Key&& x);
+  T&        at(const Key& x);
+  const T&  at(const Key& x) const;
 
-  std::pair<iterator,bool> insert(const value_type& x);
+  std::pair<iterator,bool>  insert(const value_type& x)
+    { return m_insert_unique(x); }
 
-  std::pair<iterator,bool> insert(value_type&& x);
+  std::pair<iterator,bool>  insert(value_type&& x)
+    { return m_insert_unique(x); }
 
   template <class InputIterator>
-  void insert(InputIterator first, InputIterator last);
+  void insert(InputIterator first, InputIterator last)
+    { return m_insert_unique(first, last); }
 
 };
 
@@ -118,12 +123,12 @@ public:
   {
   protected:
     Compare m_comp;
-    value_compare(Compare c) : m_comp(c) {}
   public:
     typedef bool                   result_type;
     typedef value_type             first_argument_type;
     typedef value_type             second_argument_type;
 
+    value_compare(Compare c) : m_comp(c) {}
     bool operator()(const value_type& x, const value_type& y) const
       { return m_comp(x.first, y.first); }
 
