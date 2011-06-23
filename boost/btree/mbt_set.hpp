@@ -66,11 +66,11 @@ template <class Key, class T, class Compare, class Allocator> inline
 //                                  class mbt_set                                       //
 //--------------------------------------------------------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Compare, class Allocator>
 class mbt_set   // short for memory_btree_set
   : public mbt_base<Key, mbt_set_base<Key,Compare>, Compare, Allocator>
 {
-
+public:
   explicit mbt_set(size_type node_sz = default_node_size,
     const Compare& comp = Compare(), const Allocator& alloc = Allocator());
 

@@ -1,4 +1,4 @@
-//  mbt_map.hpp  -----------------------------------------------------------------------//
+//  mbt_base.hpp  ----------------------------------------------------------------------//
 
 //  Copyright Beman Dawes 2010, 2011
 
@@ -7,8 +7,8 @@
 
 //  This library is experimental and has not been accepted as a boost.org library
 
-#ifndef BOOST_MBT_MAP_HPP
-#define BOOST_MBT_MAP_HPP
+#ifndef BOOST_MBT_MAP_BASE_HPP
+#define BOOST_MBT_MAP_BASE_HPP
 
 #define BOOST_NOEXCEPT
 
@@ -53,55 +53,11 @@ namespace boost {
 namespace btree {
 
 //--------------------------------------------------------------------------------------//
-//                                                                                      //
-//                                  class mbt_map                                       //
-//                                                                                      //
-//  "mbt_map" is a placeholder name for an in-memory B+tree set class that is similar   //
-//  to std::map. The primary difference is that all insert, emplace, and erase          //
-//  operations may (and usually do) invalidate iterators.                               //                     //
-//                                                                                      //
+//                                  class mbt_base                                      //
 //--------------------------------------------------------------------------------------//
 
-template <class Key, class T, class Compare = std::less<Key>,
-          class Allocator = std::allocator<std::pair<const Key, T> > >
-  class mbt_map;   // short for memory_btree_map
-
-template <class Key, class T, class Compare, class Allocator> inline
-  bool operator==(const mbt_map<Key,T,Compare,Allocator>& x,
-                  const mbt_map<Key,T,Compare,Allocator>& y)
-    { return x.size() == y.size()  && std::equal(x.begin(), x.end(), y.begin()); }
-
-template <class Key, class T, class Compare, class Allocator> inline
-  bool operator!=(const mbt_map<Key,T,Compare,Allocator>& x,
-                  const mbt_map<Key,T,Compare,Allocator>& y)  { return !(x == y); }
-
-template <class Key, class T, class Compare, class Allocator> inline
-  bool operator< (const mbt_map<Key,T,Compare,Allocator>& x,
-                  const mbt_map<Key,T,Compare,Allocator>& y)
-    { return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end()); }
-
-template <class Key, class T, class Compare, class Allocator> inline
-  bool operator> (const mbt_map<Key,T,Compare,Allocator>& x,
-                  const mbt_map<Key,T,Compare,Allocator>& y)  { return y < x; }
-
-template <class Key, class T, class Compare, class Allocator> inline
-  bool operator>=(const mbt_map<Key,T,Compare,Allocator>& x,
-                  const mbt_map<Key,T,Compare,Allocator>& y)  { return !(x < y); }
-
-template <class Key, class T, class Compare, class Allocator> inline
-  bool operator<=(const mbt_map<Key,T,Compare,Allocator>& x,
-                  const mbt_map<Key,T,Compare,Allocator>& y)  { return !(x > y);}
-
-template <class Key, class T, class Compare, class Allocator> inline
-  void swap(mbt_map<Key,T,Compare,Allocator>& x, mbt_map<Key,T,Compare,Allocator>& y)
-    { x.swap(y); }
-
-//--------------------------------------------------------------------------------------//
-//                                  class mbt_map                                       //
-//--------------------------------------------------------------------------------------//
-
-template <class Key, class T, class Compare, class Allocator>
-class mbt_map   // short for memory_btree_map
+template <class Key, class Base, class Compare, class Allocator>
+class mbt_base : public Base
 {
   class node;
   class leaf_node;
@@ -112,16 +68,17 @@ public:
 
   // types:
   typedef Key                                     key_type;
-  typedef T                                       mapped_type;
-  typedef std::pair<const Key, T>                 value_type;
+  typedef typename Base::value_type               value_type;
+  typedef typename Base::mapped_type              mapped_type;
   typedef Compare                                 key_compare;
+  typedef typename Base::value_compare            value_compare; 
   typedef Allocator                               allocator_type;
   typedef value_type&                             reference;
   typedef const value_type&                       const_reference;
-  typedef iterator_type<value_type>               iterator; // see 23.2
-  typedef iterator_type<const value_type>         const_iterator; // see 23.2
-  typedef std::size_t                             size_type; // see 23.2
-  typedef std::ptrdiff_t                          difference_type;// see 23.2
+  typedef iterator_type<value_type>               iterator;        // see 23.2
+  typedef iterator_type<const value_type>         const_iterator;  // see 23.2
+  typedef std::size_t                             size_type;       // see 23.2
+  typedef std::ptrdiff_t                          difference_type; // see 23.2
 //    typedef
 //      typename std::allocator_traits<Allocator>::pointer pointer;
 //    typedef
@@ -130,65 +87,41 @@ public:
   typedef std::reverse_iterator<iterator>         reverse_iterator;
   typedef std::reverse_iterator<const_iterator>   const_reverse_iterator;
 
-  static const size_type                          default_node_size = 4096;
-
-  class value_compare
-  {
-    friend class mbt_map;
-  protected:
-    Compare comp;
-    value_compare(Compare c) : comp(c) {}
-  public:
-    typedef bool                                  result_type;
-    typedef value_type                            first_argument_type;
-    typedef value_type                            second_argument_type;
-    bool operator()(const value_type& x, const value_type& y) const
-    {
-      return comp(x.first, y.first);
-    }
-    bool operator()(const Key& k, const value_type& y) const
-    {
-      return comp(k, y.first);
-    }
-    bool operator()(const value_type& x, const Key& k) const
-    {
-      return comp(x.first, k);
-    }
-  };
+  static const size_type                          default_node_size = 2048;
 
   // 23.4.4.2, construct/copy/destroy:
 
-  explicit mbt_map(size_type node_sz = default_node_size,
+  explicit mbt_base(size_type node_sz = default_node_size,
     const Compare& comp = Compare(), const Allocator& alloc = Allocator());
 
   template <class InputIterator>
-    mbt_map(InputIterator first, InputIterator last,   // range constructor
+    mbt_base(InputIterator first, InputIterator last,   // range constructor
             size_type node_sz = default_node_size,
             const Compare& comp = Compare(), const Allocator& = Allocator());
 
-  mbt_map(const mbt_map<Key,T,Compare,Allocator>& x);  // copy constructor
+  mbt_base(const mbt_base<Key,Base,Compare,Allocator>& x);  // copy constructor
 
-  mbt_map(mbt_map<Key,T,Compare,Allocator>&& x);       // move constructor
+  mbt_base(mbt_base<Key,Base,Compare,Allocator>&& x);       // move constructor
 
-//  explicit mbt_map(const Allocator&);
-//  mbt_map(const mbt_map&, const Allocator&);
-//  mbt_map(mbt_map&&, const Allocator&);
-//  mbt_map(initializer_list<value_type>, const Compare& = Compare(),
+//  explicit mbt_base(const Allocator&);
+//  mbt_base(const mbt_base&, const Allocator&);
+//  mbt_base(mbt_base&&, const Allocator&);
+//  mbt_base(initializer_list<value_type>, const Compare& = Compare(),
 //    const Allocator& = Allocator());
 
-  ~mbt_map()  {m_free_all(m_root);}
+  ~mbt_base()  {m_free_all(m_root);}
 
-  mbt_map<Key,T,Compare,Allocator>&
-    operator=(const mbt_map<Key,T,Compare,Allocator>& x);  // copy assignment
+  mbt_base<Key,Base,Compare,Allocator>&
+    operator=(const mbt_base<Key,Base,Compare,Allocator>& x);  // copy assignment
 
-  mbt_map<Key,T,Compare,Allocator>&
-    operator=(mbt_map<Key,T,Compare,Allocator>&& x);       // move assignment
+  mbt_base<Key,Base,Compare,Allocator>&
+    operator=(mbt_base<Key,Base,Compare,Allocator>&& x);       // move assignment
 
-//  mbt_map& operator=(initializer_list<value_type>);
+//  mbt_base& operator=(initializer_list<value_type>);
 
   // iterators:
   iterator                begin() BOOST_NOEXCEPT           {return m_begin();}
-  const_iterator          begin() const BOOST_NOEXCEPT     {return const_cast<mbt_map*>(this)->m_begin();}
+  const_iterator          begin() const BOOST_NOEXCEPT     {return const_cast<mbt_base*>(this)->m_begin();}
   iterator                end() BOOST_NOEXCEPT             {return iterator(this);}
   const_iterator          end() const BOOST_NOEXCEPT       {return const_iterator(this);}
   reverse_iterator        rbegin() BOOST_NOEXCEPT;
@@ -205,25 +138,12 @@ public:
   size_type               size() const BOOST_NOEXCEPT      {return m_size;}
   size_type               max_size() const BOOST_NOEXCEPT;
 
-  // 23.4.4.3, element access:
-  T&                      operator[](const key_type& x);
-  T&                      operator[](key_type&& x);
-  T&                      at(const key_type& x);
-  const T&                at(const key_type& x) const;
-
   // 23.4.4.4, modifiers:
   //template <class... Args>
   //  std::pair<iterator, bool>
   //                        emplace(Args&&... args);
   //template <class... Args>
   //  iterator              emplace_hint(const_iterator position, Args&&... args);
-
-  std::pair<iterator, bool>
-                          insert(const value_type& x);
-  std::pair<iterator, bool>
-                          insert(value_type&& x);
-  template <class InputIterator>
-    void                  insert(InputIterator first, InputIterator last);
 
 //    template <class P>
 //      std::pair<iterator, bool>
@@ -236,7 +156,7 @@ public:
   iterator                erase(const_iterator position);
   size_type               erase(const key_type& x);
   iterator                erase(const_iterator first, const_iterator last);
-  void                    swap(mbt_map<Key,T,Compare,Allocator>&x);
+  void                    swap(mbt_base<Key,Base,Compare,Allocator>&x);
   void                    clear() BOOST_NOEXCEPT;
 
   // observers:
@@ -249,12 +169,12 @@ public:
 
   // 23.4.4.5, map operations:
   iterator                find(const key_type& x);
-  const_iterator          find(const key_type& x) const {return const_cast<mbt_map*>(this)->find(x);}
+  const_iterator          find(const key_type& x) const {return const_cast<mbt_base*>(this)->find(x);}
   size_type               count(const key_type& x) const;
   iterator                lower_bound(const key_type& x);
-  const_iterator          lower_bound(const key_type& x) const {return const_cast<mbt_map*>(this)->lower_bound(x);}
+  const_iterator          lower_bound(const key_type& x) const {return const_cast<mbt_base*>(this)->lower_bound(x);}
   iterator                upper_bound(const key_type& x);
-  const_iterator          upper_bound(const key_type& x) const {return const_cast<mbt_map*>(this)->upper_bound(x);}
+  const_iterator          upper_bound(const key_type& x) const {return const_cast<mbt_base*>(this)->upper_bound(x);}
   std::pair<iterator, iterator>
                           equal_range(const key_type& x) {return std::make_pair(lower_bound(x), upper_bound(x));}
   std::pair<const_iterator, const_iterator>
@@ -264,8 +184,8 @@ private:
 
   friend class node;
 
-  typedef std::pair<Key, T>      leaf_value;
-  typedef std::pair<node*, Key>  branch_value;  // first is pointer to child node
+  typedef typename Base::leaf_value  leaf_value;
+  typedef std::pair<node*, Key>      branch_value;  // first is pointer to child node
 
   //----------------------------------------------------------------------------------//
   //                             private nested classes                               //
@@ -275,7 +195,7 @@ private:
 
   class branch_value_compare
   {
-    friend class mbt_map;
+    friend class mbt_base;
   protected:
     Compare comp;
     branch_value_compare(Compare c) : comp(c) {}
@@ -301,7 +221,7 @@ private:
 
   class node
   {
-    friend class mbt_map;
+    friend class mbt_base;
   public:
     uint16_t        _height;          // 0 for a leaf node
     uint16_t        _size;
@@ -309,7 +229,7 @@ private:
     union
     {
       branch_value* _parent_element;  // non-root node
-      mbt_map*      _owner;           // root node
+      mbt_base*      _owner;           // root node
     };
 
     uint16_t      height() const                  {return _height;}
@@ -320,13 +240,13 @@ private:
     std::size_t   size() const                    {return _size;}
     branch_node*  parent_node() const             {return _parent_node;}
     branch_value* parent_element() const          {return _parent_element;}
-    mbt_map*      owner() const                   {return _owner;}
+    mbt_base*      owner() const                   {return _owner;}
 
     void          height(uint16_t h)              {_height = h;}
     void          size(std::size_t n)             {_size = n;}
     void          parent_node(branch_node* p)     {_parent_node = p;}
     void          parent_element(branch_value* p) {_parent_element = p;}
-    void          owner(mbt_map* o)               {_owner = o;}
+    void          owner(mbt_base* o)               {_owner = o;}
 
     // GCC 4.5.2 only worked on these functions when the type was deduced - thus the
     // unused function argument
@@ -342,8 +262,8 @@ private:
   class leaf_node : public node
   {
   public:
-    typedef typename mbt_map::leaf_value   value_type;
-    typedef typename mbt_map::mapped_type  mapped_type;
+    typedef typename mbt_base::leaf_value   value_type;
+    typedef typename mbt_base::mapped_type  mapped_type;
 
     leaf_value     _leaf_values[];                // actual size determined at runtime
 
@@ -359,7 +279,7 @@ private:
   class branch_node : public node
   {
   public:
-    typedef typename mbt_map::branch_value  value_type;
+    typedef typename mbt_base::branch_value  value_type;
     typedef node*                           mapped_type;
 
     branch_value   _branch_values[];              // actual size determined at runtime
@@ -390,8 +310,8 @@ private:
       : m_node(0), m_element(0) {}
 #     endif
 
-    iterator_type(typename mbt_map::leaf_node* np,
-                  typename mbt_map::leaf_value* ep)
+    iterator_type(typename mbt_base::leaf_node* np,
+                  typename mbt_base::leaf_value* ep)
       : m_node(np), m_element(ep) {}
 
     template <class VU>
@@ -399,20 +319,20 @@ private:
       : m_node(other.m_node), m_element(other.m_element) {}
 
   private:
-    iterator_type(mbt_map* owner)  // construct end iterator
+    iterator_type(mbt_base* owner)  // construct end iterator
       : m_node(0), m_owner(owner) {}
-    iterator_type(const mbt_map* owner)  // construct end iterator
-      : m_node(0), m_owner(const_cast<mbt_map*>(owner)) {}
+    iterator_type(const mbt_base* owner)  // construct end iterator
+      : m_node(0), m_owner(const_cast<mbt_base*>(owner)) {}
 
     friend class boost::iterator_core_access;
-    friend class mbt_map;
+    friend class mbt_base;
 
-    typename mbt_map::leaf_node*    m_node;      // 0 indicates end iterator
+    typename mbt_base::leaf_node*    m_node;      // 0 indicates end iterator
 
     union  // discriminated by m_node
     {
-      typename mbt_map::leaf_value*  m_element;  // not end iterator
-      mbt_map*                       m_owner;    // end iterator
+      typename mbt_base::leaf_value*  m_element;  // not end iterator
+      mbt_base*                       m_owner;    // end iterator
     };
 
     VT& dereference() const
@@ -461,6 +381,11 @@ private:
   void      m_erase_from_parent(node* child);
   void      m_dump_node(std::ostream& os, node* np) const;
 
+  std::pair<iterator, bool>
+            m_insert_unique(const value_type& x);
+  std::pair<iterator, bool>
+            m_insert_unique(value_type&& x);
+
   void m_leaf_insert(key_type&& k, mapped_type&& mv,
                 leaf_node*& np, leaf_value*& ep);
   // Remarks:  np points to the node where insertion is to occur
@@ -484,7 +409,7 @@ private:
   template <class Node>
   static Node* node_cast(node* np) {return reinterpret_cast<Node*>(np);}
 
-};  // class mbt_map
+};  // class mbt_base
 
 //--------------------------------------------------------------------------------------//
 //                                  implementation                                      //
@@ -492,9 +417,9 @@ private:
 
 //------------------------  default and general constructor  ---------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-mbt_map<Key,T,Compare,Allocator>::
-mbt_map(size_type node_sz, const Compare& comp, const Allocator& alloc)
+template <class Key, class Base, class Compare, class Allocator>
+mbt_base<Key,Base,Compare,Allocator>::
+mbt_base(size_type node_sz, const Compare& comp, const Allocator& alloc)
     : m_node_size(node_sz), m_key_compare(comp), m_value_compare(comp),
       m_branch_value_compare(comp), m_alloc(alloc)
 {
@@ -503,10 +428,10 @@ mbt_map(size_type node_sz, const Compare& comp, const Allocator& alloc)
 
 //------------------------------  range constructor  -----------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 template <class InputIterator>
-mbt_map<Key,T,Compare,Allocator>::
-mbt_map(InputIterator first, InputIterator last,
+mbt_base<Key,Base,Compare,Allocator>::
+mbt_base(InputIterator first, InputIterator last,
         size_type node_sz, const Compare& comp, const Allocator& alloc)
     : m_node_size(node_sz), m_key_compare(comp), m_value_compare(comp),
       m_branch_value_compare(comp), m_alloc(alloc)
@@ -519,9 +444,9 @@ mbt_map(InputIterator first, InputIterator last,
 
 //-------------------------------  copy constructor  -----------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-mbt_map<Key,T,Compare,Allocator>::
-mbt_map(const mbt_map<Key,T,Compare,Allocator>& x)
+template <class Key, class Base, class Compare, class Allocator>
+mbt_base<Key,Base,Compare,Allocator>::
+mbt_base(const mbt_base<Key,Base,Compare,Allocator>& x)
   : m_node_size(x.node_size()), m_key_compare(x.key_comp()),
     m_value_compare(x.key_comp()), m_branch_value_compare(x.key_comp()),
     m_alloc(x.get_allocator())
@@ -534,9 +459,9 @@ mbt_map(const mbt_map<Key,T,Compare,Allocator>& x)
 
 //-------------------------------  move constructor  -----------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-mbt_map<Key,T,Compare,Allocator>::
-mbt_map(mbt_map<Key,T,Compare,Allocator>&& x)
+template <class Key, class Base, class Compare, class Allocator>
+mbt_base<Key,Base,Compare,Allocator>::
+mbt_base(mbt_base<Key,Base,Compare,Allocator>&& x)
   : m_node_size(x.node_size()), m_key_compare(x.key_comp()),
     m_value_compare(x.key_comp()), m_branch_value_compare(x.key_comp()),
     m_alloc(x.get_allocator())
@@ -547,10 +472,10 @@ mbt_map(mbt_map<Key,T,Compare,Allocator>&& x)
 
 //-------------------------------  copy assignment  ------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-mbt_map<Key,T,Compare,Allocator>&
-mbt_map<Key,T,Compare,Allocator>::
-operator=(const mbt_map<Key,T,Compare,Allocator>& x)
+template <class Key, class Base, class Compare, class Allocator>
+mbt_base<Key,Base,Compare,Allocator>&
+mbt_base<Key,Base,Compare,Allocator>::
+operator=(const mbt_base<Key,Base,Compare,Allocator>& x)
 {
   clear();
 
@@ -562,10 +487,10 @@ operator=(const mbt_map<Key,T,Compare,Allocator>& x)
 
 //-------------------------------  move assignment  ------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-mbt_map<Key,T,Compare,Allocator>&
-mbt_map<Key,T,Compare,Allocator>::
-operator=(mbt_map<Key,T,Compare,Allocator>&& x)
+template <class Key, class Base, class Compare, class Allocator>
+mbt_base<Key,Base,Compare,Allocator>&
+mbt_base<Key,Base,Compare,Allocator>::
+operator=(mbt_base<Key,Base,Compare,Allocator>&& x)
 {
   swap(x);
   return *this;
@@ -573,9 +498,9 @@ operator=(mbt_map<Key,T,Compare,Allocator>&& x)
 
 //-----------------------------------  m_init()  ---------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 m_init()
 {
   m_size = 0;
@@ -587,10 +512,10 @@ m_init()
 
 //------------------------------------  swap()  ----------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
-swap(mbt_map<Key,T,Compare,Allocator>&x)
+mbt_base<Key,Base,Compare,Allocator>::
+swap(mbt_base<Key,Base,Compare,Allocator>&x)
 {
   std::swap(m_key_compare, x.m_key_compare);
   std::swap(m_value_compare, x.m_value_compare);
@@ -606,9 +531,9 @@ swap(mbt_map<Key,T,Compare,Allocator>&x)
 
 //---------------------------------  m_free_all()  -------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 m_free_all(node* np)
 {
   if (np->is_leaf())
@@ -627,9 +552,9 @@ m_free_all(node* np)
 
 //-----------------------------------  clear()  ----------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 clear() BOOST_NOEXCEPT
 {
   m_free_all(m_root);
@@ -640,10 +565,10 @@ clear() BOOST_NOEXCEPT
 
 //----------------------------------  m_new_node  --------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 template <class Node>
 Node*
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 m_new_node(uint16_t height_, size_type max_elements)
 {
   std::size_t node_size = sizeof(Node) + Node::extra_space()
@@ -662,10 +587,10 @@ m_new_node(uint16_t height_, size_type max_elements)
 
 //---------------------------------  m_free_node  --------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 template <class Node>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 m_free_node(Node* np)
 {
   typedef typename Node::value_type value_type;
@@ -678,9 +603,9 @@ m_free_node(Node* np)
 
 //----------------------------------  m_begin()  ---------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
 m_begin() BOOST_NOEXCEPT
 {
   if (empty())
@@ -704,9 +629,9 @@ m_begin() BOOST_NOEXCEPT
 
 //------------------------------------ m_last() ----------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
 m_last()
 {
   if (empty())
@@ -729,54 +654,54 @@ m_last()
   return iterator(lp, lp->begin()+(lp->size()-1));
 }
 
-//---------------------------------  operator[]()  -------------------------------------//
-
-template <class Key, class T, class Compare, class Allocator>
-T&
-mbt_map<Key,T,Compare,Allocator>::
-operator[](const key_type& x)
-{
-  iterator it = m_special_lower_bound(x);
-
-  bool not_found = it.m_element == it.m_node->end()
-         || key_comp()(x, it->first)
-         || key_comp()(it->first, x);
-
-  if (not_found)
-  {
-    key_type k(x);
-    m_leaf_insert(std::move(k), T(), it.m_node, it.m_element);
-  }
-
-  return it->second;
-}
-
-//-----------------------------  operator[]() r-value ----------------------------------//
-
-template <class Key, class T, class Compare, class Allocator>
-T&
-mbt_map<Key,T,Compare,Allocator>::
-operator[](key_type&& x)
-{
-  iterator it = m_special_lower_bound(x);
-
-  bool not_found = it.m_element == it.m_node->end()
-         || key_comp()(x, it->first)
-         || key_comp()(it->first, x);
-
-  if (not_found)
-  {
-    m_leaf_insert(x, T(), it.m_node, it.m_element);
-  }
-
-  return it->second;
-}
+////---------------------------------  operator[]()  -------------------------------------//
+//
+//template <class Key, class Base, class Compare, class Allocator>
+//T&
+//mbt_base<Key,Base,Compare,Allocator>::
+//operator[](const key_type& x)
+//{
+//  iterator it = m_special_lower_bound(x);
+//
+//  bool not_found = it.m_element == it.m_node->end()
+//         || key_comp()(x, it->first)
+//         || key_comp()(it->first, x);
+//
+//  if (not_found)
+//  {
+//    key_type k(x);
+//    m_leaf_insert(std::move(k), T(), it.m_node, it.m_element);
+//  }
+//
+//  return it->second;
+//}
+//
+////-----------------------------  operator[]() r-value ----------------------------------//
+//
+//template <class Key, class Base, class Compare, class Allocator>
+//T&
+//mbt_base<Key,Base,Compare,Allocator>::
+//operator[](key_type&& x)
+//{
+//  iterator it = m_special_lower_bound(x);
+//
+//  bool not_found = it.m_element == it.m_node->end()
+//         || key_comp()(x, it->first)
+//         || key_comp()(it->first, x);
+//
+//  if (not_found)
+//  {
+//    m_leaf_insert(x, T(), it.m_node, it.m_element);
+//  }
+//
+//  return it->second;
+//}
 
 //----------------------------------- m_new_root() -------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 m_new_root()
 {
   //std::cout << "***adding new root\n";
@@ -791,12 +716,12 @@ m_new_root()
   m_root = new_root;
 }
 
-//-----------------------------------  insert()  ---------------------------------------//
+//-------------------------------  m_insert_unique()  ----------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-std::pair<typename mbt_map<Key,T,Compare,Allocator>::iterator, bool>
-mbt_map<Key,T,Compare,Allocator>::
-insert(const value_type& x)
+template <class Key, class Base, class Compare, class Allocator>
+std::pair<typename mbt_base<Key,Base,Compare,Allocator>::iterator, bool>
+mbt_base<Key,Base,Compare,Allocator>::
+m_insert_unique(const value_type& x)
 {
   iterator insert_point = m_special_lower_bound(x.first);
 
@@ -813,12 +738,12 @@ insert(const value_type& x)
   return std::pair<iterator, bool>(insert_point, true);
 }
 
-//-------------------------------  insert() r-value  -----------------------------------//
+//---------------------------  m_insert_unique() r-value  ------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-std::pair<typename mbt_map<Key,T,Compare,Allocator>::iterator, bool>
-mbt_map<Key,T,Compare,Allocator>::
-insert(value_type&& x)
+template <class Key, class Base, class Compare, class Allocator>
+std::pair<typename mbt_base<Key,Base,Compare,Allocator>::iterator, bool>
+mbt_base<Key,Base,Compare,Allocator>::
+m_insert_unique(value_type&& x)
 {
   iterator insert_point = m_special_lower_bound(x.first);
 
@@ -834,23 +759,23 @@ insert(value_type&& x)
   return std::pair<iterator, bool>(insert_point, true);
 }
 
-//-------------------------------  insert() range  -------------------------------------//
-
-template <class Key, class T, class Compare, class Allocator>
-template <class InputIterator>
-void
-mbt_map<Key,T,Compare,Allocator>::
-insert(InputIterator first, InputIterator last)
-{
-  for (; first != last; ++first)
-    insert(*first);
-}
+////-------------------------------  insert() range  -------------------------------------//
+//
+//template <class Key, class Base, class Compare, class Allocator>
+//template <class InputIterator>
+//void
+//mbt_base<Key,Base,Compare,Allocator>::
+//insert(InputIterator first, InputIterator last)
+//{
+//  for (; first != last; ++first)
+//    insert(*first);
+//}
 
 //-------------------------------  m_leaf_insert()  ------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 m_leaf_insert(key_type&& k,mapped_type&& mv,
               leaf_node*& old_node, leaf_value*& ep)
     // Requires: old_node points to the node where insertion is to occur
@@ -947,9 +872,9 @@ m_leaf_insert(key_type&& k,mapped_type&& mv,
 
 //-------------------------------  m_branch_insert()  ----------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 m_branch_insert(key_type&& k, node* old_np, node* new_np)
     // Effects:  inserts k and new_np at old_np->parent_element()->second and
     //           (old_np->parent_element()+1)->first, respectively
@@ -1053,9 +978,9 @@ m_branch_insert(key_type&& k, node* old_np, node* new_np)
 
 //------------------------------------- erase() ----------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
 erase(const_iterator pos)
 {
   BOOST_ASSERT_MSG(pos != end(), "erase() on end iterator");
@@ -1100,9 +1025,9 @@ erase(const_iterator pos)
 
 //------------------------------ m_erase_branch_value() --------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 m_erase_from_parent(node* child)
 {
   branch_node* np (child->parent_node());
@@ -1166,9 +1091,9 @@ m_erase_from_parent(node* child)
   }
 }
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::size_type
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::size_type
+mbt_base<Key,Base,Compare,Allocator>::
 erase(const key_type& k)
 {
   size_type count = 0;
@@ -1182,9 +1107,9 @@ erase(const key_type& k)
   return count;
 }
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
 erase(const_iterator first, const_iterator last)
 {
   // caution: last must be revalidated when on the same node as first
@@ -1229,9 +1154,9 @@ erase(const_iterator first, const_iterator last)
 
 //-----------------------------  m_special_lower_bound()  ------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
 m_special_lower_bound(const key_type& k) const
 {
   branch_node* bp = node_cast<branch_node>(m_root);
@@ -1266,9 +1191,9 @@ m_special_lower_bound(const key_type& k) const
 
 //---------------------------------- lower_bound() -------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
 lower_bound(const key_type& k)
 {
   iterator low = m_special_lower_bound(k);
@@ -1289,9 +1214,9 @@ lower_bound(const key_type& k)
 
 //-----------------------------  m_special_upper_bound()  ------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
 m_special_upper_bound(const key_type& k) const
 {
   branch_node* bp = node_cast<branch_node>(m_root);
@@ -1320,9 +1245,9 @@ m_special_upper_bound(const key_type& k) const
 
 //---------------------------------- upper_bound() -------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
 upper_bound(const key_type& k)
 {
   iterator up = m_special_upper_bound(k);
@@ -1337,9 +1262,9 @@ upper_bound(const key_type& k)
 
 //------------------------------------- find() -----------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
-typename mbt_map<Key,T,Compare,Allocator>::iterator
-mbt_map<Key,T,Compare,Allocator>::
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
 find(const key_type& k)
 {
   iterator low = lower_bound(k);
@@ -1350,9 +1275,9 @@ find(const key_type& k)
 
 //----------------------------------- dump_dot -----------------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 m_dump_node(std::ostream& os, node* np) const
 {
   if (np->is_leaf())
@@ -1391,9 +1316,9 @@ m_dump_node(std::ostream& os, node* np) const
   }
 }
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 void
-mbt_map<Key,T,Compare,Allocator>::
+mbt_base<Key,Base,Compare,Allocator>::
 dump_dot(std::ostream& os) const
 {
   os << "digraph btree {\nrankdir=LR;\nfontname=Courier;\n"
@@ -1406,10 +1331,10 @@ dump_dot(std::ostream& os) const
 
 //--------------------------------  node::next_node()  ---------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 template <class Node>
 Node*
-mbt_map<Key,T,Compare,Allocator>::node::
+mbt_base<Key,Base,Compare,Allocator>::node::
 next_node(Node*)  // return next node at same height, root_node if end
 {
   if (this->is_root())
@@ -1436,10 +1361,10 @@ next_node(Node*)  // return next node at same height, root_node if end
 
 //--------------------------  iterator::increment()  -----------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 template <class VT>
 void
-mbt_map<Key,T,Compare,Allocator>::iterator_type<VT>::
+mbt_base<Key,Base,Compare,Allocator>::iterator_type<VT>::
 increment()
 {
   BOOST_ASSERT_MSG(m_element, "attempt to increment uninitialized iterator");
@@ -1467,10 +1392,10 @@ increment()
 
 //-------------------------------  node::prior_node()  ---------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 template <class Node>
 Node*
-mbt_map<Key,T,Compare,Allocator>::node::
+mbt_base<Key,Base,Compare,Allocator>::node::
 prior_node(Node*)  // return prior node at same height, root_node if end
 {
   if (this->is_root())
@@ -1497,10 +1422,10 @@ prior_node(Node*)  // return prior node at same height, root_node if end
 
 //--------------------------  iterator::decrement()  -----------------------------------//
 
-template <class Key, class T, class Compare, class Allocator>
+template <class Key, class Base, class Compare, class Allocator>
 template <class VT>
 void
-mbt_map<Key,T,Compare,Allocator>::iterator_type<VT>::
+mbt_base<Key,Base,Compare,Allocator>::iterator_type<VT>::
 decrement()
 {
   BOOST_ASSERT_MSG(m_element, "attempt to increment uninitialized iterator");
@@ -1534,4 +1459,4 @@ decrement()
 #  pragma warning(pop)
 #endif
 
-#endif  // BOOST_MBT_MAP_HPP
+#endif  // BOOST_MBT_MAP_BASE_HPP
