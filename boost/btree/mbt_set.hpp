@@ -82,14 +82,14 @@ public:
             const Compare& comp = Compare(), const Allocator& alloc = Allocator())
       : mbt_base(first, last, node_sz, comp, alloc) {}
 
-  mbt_set(const mbt_set<Key,T,Compare,Allocator>& x)  // copy constructor
+  mbt_set(const mbt_set<Key,Compare,Allocator>& x)  // copy constructor
     : mbt_base(x) {}
 
-  mbt_set(mbt_set<Key,T,Compare,Allocator>&& x)       // move constructor
+  mbt_set(mbt_set<Key,Compare,Allocator>&& x)       // move constructor
     : mbt_base() {swap(x);}
 
-  mbt_set<Key,T,Compare,Allocator>&
-  operator=(mbt_set<Key,T,Compare,Allocator>&& x)     // move assignment
+  mbt_set<Key,Compare,Allocator>&
+  operator=(mbt_set<Key,Compare,Allocator>&& x)     // move assignment
   {
     swap(x);
     return *this;
@@ -113,11 +113,11 @@ public:
 //                                class btree_set_base                                  //
 //--------------------------------------------------------------------------------------//
 
-template <class Key, class Comp>
-class btree_set_base
+template <class Key, class Compare>
+class mbt_set_base
 {
 protected:
-  typedef key           leaf_value;
+  typedef Key           leaf_value;
   class unique{};
   class non_unique{};
   typedef unique        uniqueness;
@@ -125,9 +125,13 @@ protected:
 public:
   typedef Key           value_type;
   typedef Key           mapped_type;
-  typedef Comp          value_compare;
+  typedef Compare       value_compare;
 
-//  const Key& key(const value_type& v) const {return v;}  // really handy, so expose
+  const Key& key(const value_type& v) const {return v;}  // really handy, so expose
+  const Key& mapped_value(const value_type& v) const {return v;} 
+  value_type make_value(const Key& k) const {return k;}
+  value_type&& make_value(Key&& k) const {return k;}
+};
 
 }  // namespace btree
 }  // namespace boost

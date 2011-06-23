@@ -43,7 +43,7 @@ namespace
   {
     cout << "archetype test" << endl;
 
-    typedef btree::mbt_set<archetype, long, archetype_compare> set;
+    typedef btree::mbt_set<archetype, archetype_compare> set;
 
     cout << "  alignment_of<archetype> is " << boost::alignment_of<archetype>::value << endl;
     cout << "  alignment_of<set::value_type> is " << boost::alignment_of<set::value_type>::value << endl;
@@ -58,19 +58,19 @@ namespace
     {
       set bt(64);
 
-      std::pair<const archetype, long> v1(archetype(1), 1*100);
+      archetype v1(1);
       bt.insert(v1);
   //    BOOST_TEST_EQ(archetype_count::copy_construct, 1);
   //    BOOST_TEST_EQ(archetype_count::sum(), 1);
       cout << '\n';
       archetype_count::dump(cout);
 
-      std::pair<const archetype, long> v3(archetype(3), 3*100);
+      archetype v3(3);
       bt.insert(v3);
       cout << '\n';
       archetype_count::dump(cout);
 
-      std::pair<const archetype, long> v2(archetype(2), 2*100);
+      archetype v2(2);
       bt.insert(v2);
       cout << '\n';
       archetype_count::dump(cout);
@@ -80,7 +80,7 @@ namespace
       // on branch inserts and splits
       for (int i = 1000; i > 3; --i)
       {
-        std::pair<const archetype, long> x(archetype(i*1973345679), i);
+        archetype x(i*1973345679);
         bt.insert(x);
       }
     }
@@ -94,197 +94,190 @@ int cpp_main(int, char*[])
 {
   archetype_test();
 
-//  typedef btree::mbt_set<int, long> set;
-//
-//  cout << "type test" << endl;
-//
-//  BOOST_TEST((is_same< set::key_type, int>::value));
-//  BOOST_TEST((is_same< set::setped_type, long>::value));
-//  BOOST_TEST((is_same< set::value_type, std::pair<const int, long> >::value));
-//  BOOST_TEST((is_same<set::iterator::reference,
-//    std::pair<const int, long>& >::value));
-//  BOOST_TEST((is_same<set::const_iterator::reference,
-//    const std::pair<const int, long>& >::value));
-//
-//  cout << "construction test" << endl;
-//
-//  const std::size_t node_sz = 48;
-//
-//  set bt(node_sz);
-//
-//  const set* const_bt = &bt;
-//
-//  BOOST_TEST_EQ(bt.size(), 0U);
-//  BOOST_TEST_EQ(bt.node_size(), node_sz);
-//  BOOST_TEST(bt.empty());
-//  BOOST_TEST_EQ(const_bt->size(), 0U);
-//  BOOST_TEST(const_bt->empty());
-//  BOOST_TEST(bt.begin() == bt.end());
-//  BOOST_TEST(const_bt->begin() == const_bt->end());
-//  BOOST_TEST(bt.end() == const_bt->end());
-//
-//  cout << "insertion test" << endl;
-//
-//  std::pair<const int, long> v1(1, 1*100);
-//  bt.insert(v1);
-//  BOOST_TEST_EQ(bt.size(), 1U);
-//
-//  bt.insert(std::make_pair(3, 3*100));
-//  BOOST_TEST_EQ(bt.size(), 2U);
-//
-//  bt.insert(std::make_pair(2, 2*100));
-//  BOOST_TEST_EQ(bt.size(), 3U);
-//
-//  std::pair<set::iterator, bool> result = bt.insert(v1);
-//  BOOST_TEST(!result.second);
-//  BOOST_TEST_EQ(bt.size(), 3U);
-//
-//  cout << "iterator test" << endl;
-//
-//  set::iterator it = bt.begin();
-//  BOOST_TEST_EQ(it->first, 1);
-//  BOOST_TEST_EQ(it->second, 100);
-//
-//  cout << "const_iterator test" << endl;
-//
-//  set::const_iterator const_it = bt.begin();
-//  BOOST_TEST_EQ(const_it->first, 1);
-//  BOOST_TEST_EQ(const_it->second, 100);
-//
-//  cout << "iterator conversion test" << endl;
-//
-//  it = bt.begin();
-//  const_it = bt.end();
-//  BOOST_TEST(const_it != it);
-//  const_it = it;
-//  BOOST_TEST(const_it == it);
-//
-//  cout << "iteration test" << endl;
-//
-//  it = bt.begin();
-//  BOOST_TEST_EQ(it->first, 1);
-//  BOOST_TEST_EQ(it->second, 100);
-//  ++it;
-//  BOOST_TEST_EQ(it->first, 2);
-//  BOOST_TEST_EQ(it->second, 200);
-//  ++it;
-//  BOOST_TEST_EQ(it->first, 3);
-//  BOOST_TEST_EQ(it->second, 300);
-//  ++it;
-//  BOOST_TEST(it == bt.end());
-//
-//  cout << "insert more test" << endl;
-//
-//  for (int i = 100; i > 3; --i)
-//    bt.insert(std::make_pair(i, i*100));
-//  BOOST_TEST_EQ(bt.size(), 100U);
-//  cout << "  complete, height() is " << bt.height() << '\n';
-//
-//  cout << "forward iteration checksum test" << endl;
-//
-//  int itr_checksum = 0, loop_checksum = 0;
-//  std::size_t loop_counter = 0;
-//  set::const_iterator itr;
-//  for (itr = bt.begin(); itr != bt.end(); ++itr)
-//  {
-////    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
-//    ++loop_counter;
-//    itr_checksum += itr->first;
-//    loop_checksum += loop_counter;
-//  }
-//  BOOST_TEST_EQ(loop_counter, bt.size());
-//  BOOST_TEST_EQ(itr_checksum, loop_checksum);
-//
-//  cout << "backward iteration checksum test" << endl;
-//  itr_checksum = 0;
-//  for (itr = bt.end(); itr != bt.begin();)
-//  {
-//    --itr;
-//    itr_checksum += itr->first;
-//  }
-//  BOOST_TEST_EQ(itr_checksum, loop_checksum);
-//
-//  cout << "lower_bound test" << endl;
-//
-//  BOOST_TEST_EQ(bt.lower_bound(0)->first, 1);
-//  BOOST_TEST_EQ(bt.lower_bound(1)->first, 1);
-//  BOOST_TEST_EQ(bt.lower_bound(20)->first, 20);
-//  BOOST_TEST_EQ(bt.lower_bound(40)->first, 40);
-//  BOOST_TEST(bt.lower_bound(bt.size()+1)==bt.end());
-//
-//  cout << "const lower_bound test" << endl;
-//
-//  BOOST_TEST_EQ(const_bt->lower_bound(0)->first, 1);
-//  BOOST_TEST_EQ(const_bt->lower_bound(1)->first, 1);
-//  BOOST_TEST_EQ(const_bt->lower_bound(20)->first, 20);
-//  BOOST_TEST_EQ(const_bt->lower_bound(bt.size())->first, set::key_type(bt.size()));
-//  BOOST_TEST(const_bt->lower_bound(bt.size()+1)==const_bt->end());
-//
-//  cout << "find test" << endl;
-//
-//  BOOST_TEST(bt.find(0)==bt.end());
-//  for (int i = 1; i <= int(bt.size()); ++i)
-//    BOOST_TEST_EQ(bt.find(i)->first, i);
-//  BOOST_TEST(bt.find(bt.size()+1)==bt.end());
-//
-//  cout << "const find test" << endl;
-//
-//  BOOST_TEST(const_bt->find(0)==const_bt->end());
-//  for (int i = 1; i <= int(bt.size()); ++i)
-//    BOOST_TEST_EQ(const_bt->find(i)->first, i);
-//  BOOST_TEST(const_bt->find(bt.size()+1)==const_bt->end());
-//
-//  cout << "upper_bound test" << endl;
-//
-//  BOOST_TEST_EQ(bt.upper_bound(0)->first, 1);
-//  BOOST_TEST_EQ(bt.upper_bound(1)->first, 2);
-//  BOOST_TEST_EQ(bt.upper_bound(20)->first, 21);
-//  BOOST_TEST(bt.upper_bound(bt.size())==bt.end());
-//  BOOST_TEST(bt.upper_bound(bt.size()+1)==bt.end());
-//
-//  cout << "const upper_bound test" << endl;
-//
-//  BOOST_TEST_EQ(const_bt->upper_bound(0)->first, 1);
-//  BOOST_TEST_EQ(const_bt->upper_bound(1)->first, 2);
-//  BOOST_TEST_EQ(const_bt->upper_bound(20)->first, 21);
-//  BOOST_TEST(const_bt->upper_bound(bt.size())==const_bt->end());
-//  BOOST_TEST(const_bt->upper_bound(bt.size()+1)==const_bt->end());
-//
-//  cout << "equal_range test" << endl;
-//
-//  std::pair<set::iterator, set::iterator> eq = bt.equal_range(0);
-//  BOOST_TEST(eq.first->first == 1);
-//  BOOST_TEST(eq.second->first == 1);
-//  eq = bt.equal_range(1);
-//  BOOST_TEST(eq.first->first == 1);
-//  BOOST_TEST(eq.second->first == 2);
-//  eq = bt.equal_range(20);
-//  BOOST_TEST(eq.first->first == 20);
-//  BOOST_TEST(eq.second->first == 21);
-//  eq = bt.equal_range(bt.size());
-//  BOOST_TEST(eq.first->first == set::key_type(bt.size()));
-//  BOOST_TEST(eq.second == bt.end());
-//  eq = bt.equal_range(bt.size()+1);
-//  BOOST_TEST(eq.first == bt.end());
-//  BOOST_TEST(eq.second == bt.end());
-//
-//  cout << "const equal_range test" << endl;
-//
-//  std::pair<set::const_iterator, set::const_iterator> const_eq = const_bt->equal_range(0);
-//  BOOST_TEST(const_eq.first->first == 1);
-//  BOOST_TEST(const_eq.second->first == 1);
-//  const_eq = const_bt->equal_range(1);
-//  BOOST_TEST(const_eq.first->first == 1);
-//  BOOST_TEST(const_eq.second->first == 2);
-//  const_eq = const_bt->equal_range(20);
-//  BOOST_TEST(const_eq.first->first == 20);
-//  BOOST_TEST(const_eq.second->first == 21);
-//  const_eq = const_bt->equal_range(bt.size());
-//  BOOST_TEST(const_eq.first->first == set::key_type(bt.size()));
-//  BOOST_TEST(const_eq.second == const_bt->end());
-//  const_eq = const_bt->equal_range(bt.size()+1);
-//  BOOST_TEST(const_eq.first == const_bt->end());
-//  BOOST_TEST(const_eq.second == const_bt->end());
+  typedef btree::mbt_set<int> set;
+
+  cout << "type test" << endl;
+
+  BOOST_TEST((is_same< set::key_type, int>::value));
+  BOOST_TEST((is_same< set::mapped_type, int>::value));
+  BOOST_TEST((is_same< set::value_type, int>::value));
+  BOOST_TEST((is_same<set::iterator::reference, int& >::value));
+  BOOST_TEST((is_same<set::const_iterator::reference, const int& >::value));
+
+  cout << "construction test" << endl;
+
+  const std::size_t node_sz = 48;
+
+  set bt(node_sz);
+
+  const set* const_bt = &bt;
+
+  BOOST_TEST_EQ(bt.size(), 0U);
+  BOOST_TEST_EQ(bt.node_size(), node_sz);
+  BOOST_TEST(bt.empty());
+  BOOST_TEST_EQ(const_bt->size(), 0U);
+  BOOST_TEST(const_bt->empty());
+  BOOST_TEST(bt.begin() == bt.end());
+  BOOST_TEST(const_bt->begin() == const_bt->end());
+  BOOST_TEST(bt.end() == const_bt->end());
+
+  cout << "insertion test" << endl;
+
+  int v1(1);
+  bt.insert(v1);
+  BOOST_TEST_EQ(bt.size(), 1U);
+
+  bt.insert(3);
+  BOOST_TEST_EQ(bt.size(), 2U);
+
+  bt.insert(2);
+  BOOST_TEST_EQ(bt.size(), 3U);
+
+  std::pair<set::iterator, bool> result = bt.insert(v1);
+  BOOST_TEST(!result.second);
+  BOOST_TEST_EQ(bt.size(), 3U);
+
+  cout << "iterator test" << endl;
+
+  set::iterator it = bt.begin();
+  BOOST_TEST_EQ(*it, 1);
+
+  cout << "const_iterator test" << endl;
+
+  set::const_iterator const_it = bt.begin();
+  BOOST_TEST_EQ(*const_it, 1);
+
+  cout << "iterator conversion test" << endl;
+
+  it = bt.begin();
+  const_it = bt.end();
+  BOOST_TEST(const_it != it);
+  const_it = it;
+  BOOST_TEST(const_it == it);
+
+  cout << "iteration test" << endl;
+
+  it = bt.begin();
+  BOOST_TEST_EQ(*it, 1);
+  ++it;
+  BOOST_TEST_EQ(*it, 2);
+  ++it;
+  BOOST_TEST_EQ(*it, 3);
+  ++it;
+  BOOST_TEST(it == bt.end());
+
+  cout << "insert more test" << endl;
+
+  for (int i = 100; i > 3; --i)
+    bt.insert(i);
+  BOOST_TEST_EQ(bt.size(), 100U);
+  cout << "  complete, height() is " << bt.height() << '\n';
+
+  cout << "forward iteration checksum test" << endl;
+
+  int itr_checksum = 0, loop_checksum = 0;
+  std::size_t loop_counter = 0;
+  set::const_iterator itr;
+  for (itr = bt.begin(); itr != bt.end(); ++itr)
+  {
+//    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+    ++loop_counter;
+    itr_checksum += *itr;
+    loop_checksum += loop_counter;
+  }
+  BOOST_TEST_EQ(loop_counter, bt.size());
+  BOOST_TEST_EQ(itr_checksum, loop_checksum);
+
+  cout << "backward iteration checksum test" << endl;
+  itr_checksum = 0;
+  for (itr = bt.end(); itr != bt.begin();)
+  {
+    --itr;
+    itr_checksum += *itr;
+  }
+  BOOST_TEST_EQ(itr_checksum, loop_checksum);
+
+  cout << "lower_bound test" << endl;
+
+  BOOST_TEST_EQ(*bt.lower_bound(0), 1);
+  BOOST_TEST_EQ(*bt.lower_bound(1), 1);
+  BOOST_TEST_EQ(*bt.lower_bound(20), 20);
+  BOOST_TEST_EQ(*bt.lower_bound(40), 40);
+  BOOST_TEST(bt.lower_bound(bt.size()+1) == bt.end());
+
+  cout << "const lower_bound test" << endl;
+
+  BOOST_TEST_EQ(*const_bt->lower_bound(0), 1);
+  BOOST_TEST_EQ(*const_bt->lower_bound(1), 1);
+  BOOST_TEST_EQ(*const_bt->lower_bound(20), 20);
+  BOOST_TEST_EQ(*const_bt->lower_bound(bt.size()), set::key_type(bt.size()));
+  BOOST_TEST(const_bt->lower_bound(bt.size()+1) == const_bt->end());
+
+  cout << "find test" << endl;
+
+  BOOST_TEST(bt.find(0)==bt.end());
+  for (int i = 1; i <= int(bt.size()); ++i)
+    BOOST_TEST_EQ(*bt.find(i), i);
+  BOOST_TEST(bt.find(bt.size()+1) == bt.end());
+
+  cout << "const find test" << endl;
+
+  BOOST_TEST(const_bt->find(0)==const_bt->end());
+  for (int i = 1; i <= int(bt.size()); ++i)
+    BOOST_TEST_EQ(*const_bt->find(i), i);
+  BOOST_TEST(const_bt->find(bt.size()+1) == const_bt->end());
+
+  cout << "upper_bound test" << endl;
+
+  BOOST_TEST_EQ(*bt.upper_bound(0), 1);
+  BOOST_TEST_EQ(*bt.upper_bound(1), 2);
+  BOOST_TEST_EQ(*bt.upper_bound(20), 21);
+  BOOST_TEST(bt.upper_bound(bt.size()) == bt.end());
+  BOOST_TEST(bt.upper_bound(bt.size()+1) == bt.end());
+
+  cout << "const upper_bound test" << endl;
+
+  BOOST_TEST_EQ(*const_bt->upper_bound(0), 1);
+  BOOST_TEST_EQ(*const_bt->upper_bound(1), 2);
+  BOOST_TEST_EQ(*const_bt->upper_bound(20), 21);
+  BOOST_TEST(const_bt->upper_bound(bt.size()) == const_bt->end());
+  BOOST_TEST(const_bt->upper_bound(bt.size()+1) == const_bt->end());
+
+  cout << "equal_range test" << endl;
+
+  std::pair<set::iterator, set::iterator> eq = bt.equal_range(0);
+  BOOST_TEST(*eq.first == 1);
+  BOOST_TEST(*eq.second == 1);
+  eq = bt.equal_range(1);
+  BOOST_TEST(*eq.first == 1);
+  BOOST_TEST(*eq.second == 2);
+  eq = bt.equal_range(20);
+  BOOST_TEST(*eq.first == 20);
+  BOOST_TEST(*eq.second == 21);
+  eq = bt.equal_range(bt.size());
+  BOOST_TEST(*eq.first == set::key_type(bt.size()));
+  BOOST_TEST(eq.second == bt.end());
+  eq = bt.equal_range(bt.size()+1);
+  BOOST_TEST(eq.first == bt.end());
+  BOOST_TEST(eq.second == bt.end());
+
+  cout << "const equal_range test" << endl;
+
+  std::pair<set::const_iterator, set::const_iterator> const_eq = const_bt->equal_range(0);
+  BOOST_TEST(*const_eq.first == 1);
+  BOOST_TEST(*const_eq.second == 1);
+  const_eq = const_bt->equal_range(1);
+  BOOST_TEST(*const_eq.first == 1);
+  BOOST_TEST(*const_eq.second == 2);
+  const_eq = const_bt->equal_range(20);
+  BOOST_TEST(*const_eq.first == 20);
+  BOOST_TEST(*const_eq.second == 21);
+  const_eq = const_bt->equal_range(bt.size());
+  BOOST_TEST(*const_eq.first == set::key_type(bt.size()));
+  BOOST_TEST(const_eq.second == const_bt->end());
+  const_eq = const_bt->equal_range(bt.size()+1);
+  BOOST_TEST(const_eq.first == const_bt->end());
+  BOOST_TEST(const_eq.second == const_bt->end());
 //
 //  cout << "operator[] l-value test" << endl;
 //

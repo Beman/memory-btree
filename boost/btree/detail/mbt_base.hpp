@@ -390,7 +390,7 @@ protected:
   std::pair<iterator, bool>
             m_insert_unique(value_type&& x);
 
-  void m_leaf_insert(key_type&& k, mapped_type&& mv,
+  void m_leaf_insert(value_type&& mv,
                 leaf_node*& np, leaf_value*& ep);
   // Remarks:  np points to the node where insertion is to occur
   //           ep points to the element where insertion is to occur
@@ -672,18 +672,17 @@ m_last()
 template <class Key, class Base, class Compare, class Allocator>
 typename mbt_base<Key,Base,Compare,Allocator>::mapped_type&
 mbt_base<Key,Base,Compare,Allocator>::
-m_op_square_brackets(const key_type& x)
+m_op_square_brackets(const key_type& k)
 {
-  iterator it = m_special_lower_bound(x);
+  iterator it = m_special_lower_bound(k);
 
   bool not_found = it.m_element == it.m_node->end()
-         || key_comp()(x, it->first)
-         || key_comp()(it->first, x);
+         || key_comp()(k, it->first)
+         || key_comp()(it->first, k);
 
   if (not_found)
   {
-    key_type k(x);
-    m_leaf_insert(std::move(k), mapped_type(), it.m_node, it.m_element);
+    m_leaf_insert(make_value(k), it.m_node, it.m_element);
   }
 
   return it->second;
@@ -694,17 +693,17 @@ m_op_square_brackets(const key_type& x)
 template <class Key, class Base, class Compare, class Allocator>
 typename mbt_base<Key,Base,Compare,Allocator>::mapped_type&
 mbt_base<Key,Base,Compare,Allocator>::
-m_op_square_brackets(key_type&& x)
+m_op_square_brackets(key_type&& k)
 {
-  iterator it = m_special_lower_bound(x);
+  iterator it = m_special_lower_bound(k);
 
   bool not_found = it.m_element == it.m_node->end()
-         || key_comp()(x, it->first)
-         || key_comp()(it->first, x);
+         || key_comp()(k, it->first)
+         || key_comp()(it->first, k);
 
   if (not_found)
   {
-    m_leaf_insert(x, mapped_type(), it.m_node, it.m_element);
+    m_leaf_insert(make_value(k), it.m_node, it.m_element);
   }
 
   return it->second;
@@ -736,18 +735,17 @@ std::pair<typename mbt_base<Key,Base,Compare,Allocator>::iterator, bool>
 mbt_base<Key,Base,Compare,Allocator>::
 m_insert_unique(const value_type& x)
 {
-  iterator insert_point = m_special_lower_bound(x.first);
+  iterator insert_point = m_special_lower_bound(key(x));
 
   bool unique = insert_point.m_element == insert_point.m_node->end()
-         || key_comp()(x.first, insert_point->first)
-         || key_comp()(insert_point->first, x.first);
+         || key_comp()(key(x), key(*insert_point))
+         || key_comp()(key(*insert_point), key(x));
 
   if (!unique)
     return std::pair<iterator, bool>(insert_point, false);
 
-  key_type k(x.first);
-  mapped_type mv(x.second);
-  m_leaf_insert(std::move(k), std::move(mv), insert_point.m_node, insert_point.m_element);
+  value_type v = x;
+  m_leaf_insert(std::move(v), insert_point.m_node, insert_point.m_element);
   return std::pair<iterator, bool>(insert_point, true);
 }
 
@@ -758,11 +756,11 @@ std::pair<typename mbt_base<Key,Base,Compare,Allocator>::iterator, bool>
 mbt_base<Key,Base,Compare,Allocator>::
 m_insert_unique(value_type&& x)
 {
-  iterator insert_point = m_special_lower_bound(x.first);
+  iterator insert_point = m_special_lower_bound(key(x));
 
   bool unique = insert_point.m_element == insert_point.m_node->end()
-         || key_comp()(x.first, insert_point->first)
-         || key_comp()(insert_point->first, x.first);
+         || key_comp()(key(x), key(*insert_point))
+         || key_comp()(key(*insert_point), key(x));
 
   if (!unique)
     return std::pair<iterator, bool>(insert_point, false);
@@ -777,7 +775,7 @@ m_insert_unique(value_type&& x)
 template <class Key, class Base, class Compare, class Allocator>
 void
 mbt_base<Key,Base,Compare,Allocator>::
-m_leaf_insert(key_type&& k,mapped_type&& mv,
+m_leaf_insert(value_type&& x,
               leaf_node*& old_node, leaf_value*& ep)
     // Requires: old_node points to the node where insertion is to occur
     //           ep points to the element where insertion is to occur
@@ -849,15 +847,14 @@ m_leaf_insert(key_type&& k,mapped_type&& mv,
   std::move_backward(insert_begin, np->end(), np->end()+1);
 
   //  insert x at insert_begin
-  insert_begin->first = k;
-  insert_begin->second = mv;
+  *insert_begin = x;
   ++np->_size;
   ++m_size;
 
   // if there is a new node, its initial key and leaf_node* are inserted into parent
   if (new_node)
   {
-    key_type first_key = new_node->begin()->first;  // avoid unwanted move
+    key_type first_key = key(*new_node->begin());  // avoid unwanted move
     m_branch_insert(std::move(first_key), old_node, new_node);
 
     // if the insert point changed, update the caller's pointers
@@ -1269,7 +1266,7 @@ mbt_base<Key,Base,Compare,Allocator>::
 find(const key_type& k)
 {
   iterator low = lower_bound(k);
-  return (low != end() && !key_comp()(k, low->first))
+  return (low != end() && !key_comp()(k, key(*low)))
     ? low
     : end();
 }

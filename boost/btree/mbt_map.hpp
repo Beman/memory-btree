@@ -132,8 +132,12 @@ public:
   typedef T                        mapped_type;
   typedef std::pair<const Key, T>  value_type;
 
-  //const Key& key(const value_type& v) const  // really handy, so expose
-  //  {return v.key();}
+  const Key& key(const value_type& v) const  // really handy, so expose
+    {return v.first;}
+  const T& mapped_value(const value_type& v) const
+    {return v.second;}
+  value_type make_value(const Key& k)
+  {return value_type(k, mapped_type());}
 
   class value_compare
   {
