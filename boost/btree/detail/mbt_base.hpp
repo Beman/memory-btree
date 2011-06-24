@@ -40,6 +40,12 @@
 /*
 TODO:
 
+  * r-value insert not being tested
+
+  * erase: doesn't m_erase_from_parent invalidate nxt_it? Fix or document.
+
+  * uniqueness s/b renamed unique and be a typedef for true_type or false_type
+  
   * Tighten requirements on Key and T to match standard library.
     Change archetype accordingly.
 
@@ -390,15 +396,19 @@ protected:
   std::pair<iterator, bool>
             m_insert_unique(value_type&& x);
 
-  void m_leaf_insert(value_type&& mv,
-                leaf_node*& np, leaf_value*& ep);
+  iterator  m_insert_non_unique(const value_type& x);
+
+  template <class P>
+  iterator  m_insert_non_unique(P&& x);
+
+  void      m_leaf_insert(value_type&& v, leaf_node*& np, leaf_value*& ep);
   // Remarks:  np points to the node where insertion is to occur
   //           ep points to the element where insertion is to occur
-  // Effects:  Inserts k and mv at *ep. If the insertion causes a node to be split,
+  // Effects:  Inserts v at *ep. If the insertion causes a node to be split,
   //           and the ep falls on the newly split node, np and ep are set to point to
   //           the new node and appropriate element
 
-  void m_branch_insert(key_type&& k, node* old_np, node* new_np);
+  void      m_branch_insert(key_type&& k, node* old_np, node* new_np);
   // Effects:  inserts k and new_np at old_np->parent_element()->second and
   //           (old_np->parent_element()+1)->first, respectively
   // Postcondition: For the nodes pointed to by old_np and new_np, parent_node() and
@@ -765,9 +775,36 @@ m_insert_unique(value_type&& x)
   if (!unique)
     return std::pair<iterator, bool>(insert_point, false);
 
-  m_leaf_insert(std::move(static_cast<key_type>(x.first)), std::move(x.second),
-    insert_point.m_node, insert_point.m_element);
+  m_leaf_insert(x, insert_point.m_node, insert_point.m_element);
   return std::pair<iterator, bool>(insert_point, true);
+}
+
+//-----------------------------  m_insert_non_unique()  --------------------------------//
+
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
+m_insert_non_unique(const value_type& x)
+{
+  iterator insert_point = m_special_upper_bound(key(x));
+
+  value_type v = x;
+  m_leaf_insert(std::move(v), insert_point.m_node, insert_point.m_element);
+  return insert_point;
+}
+
+//-------------------------  m_insert_non_unique() r-value  ----------------------------//
+
+template <class Key, class Base, class Compare, class Allocator>
+template <class P>
+typename mbt_base<Key,Base,Compare,Allocator>::iterator
+mbt_base<Key,Base,Compare,Allocator>::
+m_insert_non_unique(P&& x)
+{
+  iterator insert_point = m_special_lower_bound(key(x));
+
+  m_leaf_insert(x, insert_point.m_node, insert_point.m_element);
+  return insert_point;
 }
 
 //-------------------------------  m_leaf_insert()  ------------------------------------//
@@ -1008,9 +1045,7 @@ erase(const_iterator pos)
     // the node from the tree.
     std::move(pos.m_element+1, pos.m_node->end(), pos.m_element);
     pos.m_node->size(pos.m_node->size()-1);
-    pos.m_node->end()->first.~key_type();
-    pos.m_node->end()->second.~mapped_type();
-
+    pos.m_node->end()->~leaf_value();
     if (pos.m_element != pos.m_node->end())
       return iterator(pos.m_node, pos.m_element);
 
@@ -1097,7 +1132,7 @@ erase(const key_type& k)
   size_type count = 0;
   const_iterator it = lower_bound(k);
 
-  while (it != end() && !key_comp()(k, it->first))
+  while (it != end() && !key_comp()(k, key(*it)))
   {
     ++count;
     it = erase(it);

@@ -100,11 +100,10 @@ public:
 //  T&        at(const Key& x);
 //  const T&  at(const Key& x) const;
 
-  std::pair<iterator,bool>  insert(const value_type& x)
-    { return m_insert_unique(x); }
+  std::pair<iterator,bool>  insert(const value_type& x)  { return m_insert_unique(x); }
 
-  std::pair<iterator,bool>  insert(value_type&& x)
-    { return m_insert_unique(x); }
+  template <class P>
+  std::pair<iterator,bool>  insert(P&& x)                { return m_insert_unique(x); }
 
   template <class InputIterator>
     void insert(InputIterator first, InputIterator last)
@@ -127,6 +126,141 @@ protected:
   class unique{};
   class non_unique{};
   typedef unique                   uniqueness;
+
+public:
+  typedef T                        mapped_type;
+  typedef std::pair<const Key, T>  value_type;
+
+  const Key& key(const value_type& v) const  // really handy, so expose
+    {return v.first;}
+  const T& mapped_value(const value_type& v) const
+    {return v.second;}
+  value_type make_value(const Key& k)
+  {return value_type(k, mapped_type());}
+
+  class value_compare
+  {
+  protected:
+    Compare m_comp;
+  public:
+    typedef bool                   result_type;
+    typedef value_type             first_argument_type;
+    typedef value_type             second_argument_type;
+
+    value_compare(Compare c) : m_comp(c) {}
+    bool operator()(const value_type& x, const value_type& y) const
+      { return m_comp(x.first, y.first); }
+
+    bool operator()(const value_type& x, const Key& y) const
+      { return m_comp(x.first, y); }
+
+    bool operator()(const Key& x, const value_type& y) const
+      { return m_comp(x, y.first); }
+  };
+};
+
+//--------------------------------------------------------------------------------------//
+//                                                                                      //
+//                               class mbt_multimap                                     //
+//                                                                                      //
+//--------------------------------------------------------------------------------------//
+
+template <class Key, class T, class Compare = std::less<Key>,
+          class Allocator = std::allocator<std::pair<const Key, T> > >
+  class mbt_multimap;   // short for memory_btree_multimap
+
+template <class Key, class T, class Compare, class Allocator> inline
+  bool operator==(const mbt_multimap<Key,T,Compare,Allocator>& x,
+                  const mbt_multimap<Key,T,Compare,Allocator>& y)
+    { return x.size() == y.size()  && std::equal(x.begin(), x.end(), y.begin()); }
+
+template <class Key, class T, class Compare, class Allocator> inline
+  bool operator!=(const mbt_multimap<Key,T,Compare,Allocator>& x,
+                  const mbt_multimap<Key,T,Compare,Allocator>& y)  { return !(x == y); }
+
+template <class Key, class T, class Compare, class Allocator> inline
+  bool operator< (const mbt_multimap<Key,T,Compare,Allocator>& x,
+                  const mbt_multimap<Key,T,Compare,Allocator>& y)
+    { return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end()); }
+
+template <class Key, class T, class Compare, class Allocator> inline
+  bool operator> (const mbt_multimap<Key,T,Compare,Allocator>& x,
+                  const mbt_multimap<Key,T,Compare,Allocator>& y)  { return y < x; }
+
+template <class Key, class T, class Compare, class Allocator> inline
+  bool operator>=(const mbt_multimap<Key,T,Compare,Allocator>& x,
+                  const mbt_multimap<Key,T,Compare,Allocator>& y)  { return !(x < y); }
+
+template <class Key, class T, class Compare, class Allocator> inline
+  bool operator<=(const mbt_multimap<Key,T,Compare,Allocator>& x,
+                  const mbt_multimap<Key,T,Compare,Allocator>& y)  { return !(x > y);}
+
+template <class Key, class T, class Compare, class Allocator> inline
+  void swap(mbt_multimap<Key,T,Compare,Allocator>& x, mbt_multimap<Key,T,Compare,Allocator>& y)
+    { x.swap(y); }
+
+template <class Key, class T, class Compare> class mbt_multimap_base;
+
+//--------------------------------------------------------------------------------------//
+//                               class mbt_multimap                                     //
+//--------------------------------------------------------------------------------------//
+
+template <class Key, class T, class Compare, class Allocator>
+class mbt_multimap   // short for memory_btree_multimap
+  : public mbt_base<Key, mbt_multimap_base<Key,T,Compare>, Compare, Allocator>
+{
+public:
+
+  explicit mbt_multimap(size_type node_sz = default_node_size,
+    const Compare& comp = Compare(), const Allocator& alloc = Allocator())
+      : mbt_base(node_sz, comp, alloc) {}
+
+
+  template <class InputIterator>
+    mbt_multimap(InputIterator first, InputIterator last,   // range constructor
+            size_type node_sz = default_node_size,
+            const Compare& comp = Compare(), const Allocator& alloc = Allocator())
+      : mbt_base(first, last, node_sz, comp, alloc) {}
+
+  mbt_multimap(const mbt_multimap<Key,T,Compare,Allocator>& x)  // copy constructor
+    : mbt_base(x) {}
+
+  mbt_multimap(mbt_multimap<Key,T,Compare,Allocator>&& x)       // move constructor
+    : mbt_base() {swap(x);}
+
+  mbt_multimap<Key,T,Compare,Allocator>&
+  operator=(mbt_multimap<Key,T,Compare,Allocator>&& x)     // move assignment
+  {
+    swap(x);
+    return *this;
+  }
+
+  iterator  insert(const value_type& x)         { return m_insert_non_unique(x); }
+
+  template <class P>
+  iterator  insert(P&& x)                       { return m_insert_non_unique(x); }
+
+  template <class InputIterator>
+    void insert(InputIterator first, InputIterator last)
+  {
+    for (; first != last; ++first)
+      m_insert_non_unique(*first);
+  }
+
+};
+
+//--------------------------------------------------------------------------------------//
+//                             class mbt_multimap_base                                  //
+//--------------------------------------------------------------------------------------//
+
+template <class Key, class T, class Compare>
+class mbt_multimap_base
+{
+protected:
+  typedef std::pair<Key, T>        leaf_value;
+  class unique{};
+  class non_unique{};
+  typedef non_unique               uniqueness;
 
 public:
   typedef T                        mapped_type;
