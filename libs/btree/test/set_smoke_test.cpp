@@ -293,101 +293,101 @@ int cpp_main(int, char*[])
 //  bt[key] = key*1000;
 //  BOOST_TEST_EQ(bt.size(), sz+1);
 //  BOOST_TEST_EQ(bt.find(key)->second, key*1000);
-//
-//  cout << "copy construction test" << endl;
-//
-//  set bt2(bt);
-//  BOOST_TEST_EQ(bt.size(), bt2.size());
-//  BOOST_TEST(bt == bt2);
-//  BOOST_TEST(!(bt != bt2));
-//  BOOST_TEST(!(bt < bt2));
-//  BOOST_TEST( bt <= bt2);
-//  BOOST_TEST(!(bt > bt2));
-//  BOOST_TEST(bt >= bt2);
-//  itr_checksum = 0;
-//  for (itr = bt2.begin(); itr != bt2.end(); ++itr)
-//  {
-////    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
-//    itr_checksum += itr->first;
-//  }
-//  BOOST_TEST_EQ(itr_checksum, loop_checksum);
-//
-//  cout << "relational test" << endl;
-//
-//  bt2.erase(--bt2.end());
-//  BOOST_TEST_EQ(bt.size()-1, bt2.size());
-//  BOOST_TEST(bt != bt2);
-//  BOOST_TEST(!(bt == bt2));
-//  BOOST_TEST(!(bt < bt2));
-//  BOOST_TEST(!(bt <= bt2));
-//  BOOST_TEST(bt > bt2);
-//  BOOST_TEST(bt >= bt2);
-//
-//  cout << "range construction test" << endl;
-//
-//  set bt3(bt.begin(), bt.end());
-//  BOOST_TEST_EQ(bt.size(), bt3.size());
-//  BOOST_TEST(bt == bt3);
-// 
-//  cout << "move construction test" << endl;
-//
-//  set bt4a(bt);
-//  set bt4b(std::move(bt4a));
-//  BOOST_TEST_EQ(bt4a.size(), 0U);
-//  BOOST_TEST_EQ(bt4b.size(), bt.size());
-//  BOOST_TEST(bt4b == bt);
-//
-//  cout << "copy assignment test" << endl;
-//  
-//  set bt5;
-//  bt5 = bt;
-//  BOOST_TEST_EQ(bt.size(), bt5.size());
-//  BOOST_TEST(bt == bt5);
-//
-//  cout << "move assignment test" << endl;
-//
-//  set bt6a(bt);
-//  set bt6b;
-//  bt6b.insert(v1);
-//  bt6b = std::move(bt6a);
-//  BOOST_TEST_EQ(bt6a.size(), 1U);  // required by implementation rather than specs
-//  BOOST_TEST_EQ(bt6b.size(), bt.size());
-//  BOOST_TEST(bt6b == bt);
-//
-//  cout << "range insert test" << endl;
-//  
-//  set bt7;
-//  bt7.insert(bt.begin(), bt.end());
-//  BOOST_TEST_EQ(bt7.size(), bt.size());
-//  BOOST_TEST(bt7 == bt);
-//
-//  cout << "erase test" << endl;
-//
-//  set::size_type old_sz = bt.size();
-//  set::size_type ct = bt.erase(20);
-//  BOOST_TEST_EQ(ct, 1U);
-//  --old_sz;
-//  BOOST_TEST_EQ(bt.size(), old_sz);
-//
-//  BOOST_TEST(bt.height() > 1);  // make sure test covers several branch levels
-//  for (int i = 1; i <= int(old_sz); ++i)
-//  {
-////    cout << i << endl;
-//    bt.erase(i);
-//  }
-//  //for (itr = bt.begin(); itr != bt.end(); ++itr)
-//  //{
-//  //  std::cout << "  " << itr->first << ", " << itr->second << std::endl;
-//  //}
-//  BOOST_TEST_EQ(bt.size(), 1U);
-//  BOOST_TEST_EQ(bt.height(), 0);
-//
-//  cout << "clear test" << endl;
-//
-//  bt.clear();
-//  BOOST_TEST_EQ(bt.size(), 0U);
-//  BOOST_TEST_EQ(bt.height(), 0);
-//
+
+  cout << "copy construction test" << endl;
+
+  set bt2(bt);
+  BOOST_TEST_EQ(bt.size(), bt2.size());
+  BOOST_TEST(bt == bt2);
+  BOOST_TEST(!(bt != bt2));
+  BOOST_TEST(!(bt < bt2));
+  BOOST_TEST( bt <= bt2);
+  BOOST_TEST(!(bt > bt2));
+  BOOST_TEST(bt >= bt2);
+  itr_checksum = 0;
+  for (itr = bt2.begin(); itr != bt2.end(); ++itr)
+  {
+//    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+    itr_checksum += *itr;
+  }
+  BOOST_TEST_EQ(itr_checksum, loop_checksum);
+
+  cout << "relational test" << endl;
+
+  bt2.erase(--bt2.end());
+  BOOST_TEST_EQ(bt.size()-1, bt2.size());
+  BOOST_TEST(bt != bt2);
+  BOOST_TEST(!(bt == bt2));
+  BOOST_TEST(!(bt < bt2));
+  BOOST_TEST(!(bt <= bt2));
+  BOOST_TEST(bt > bt2);
+  BOOST_TEST(bt >= bt2);
+
+  cout << "range construction test" << endl;
+
+  set bt3(bt.begin(), bt.end());
+  BOOST_TEST_EQ(bt.size(), bt3.size());
+  BOOST_TEST(bt == bt3);
+ 
+  cout << "move construction test" << endl;
+
+  set bt4a(bt);
+  set bt4b(std::move(bt4a));
+  BOOST_TEST_EQ(bt4a.size(), 0U);
+  BOOST_TEST_EQ(bt4b.size(), bt.size());
+  BOOST_TEST(bt4b == bt);
+
+  cout << "copy assignment test" << endl;
+  
+  set bt5;
+  bt5 = bt;
+  BOOST_TEST_EQ(bt.size(), bt5.size());
+  BOOST_TEST(bt == bt5);
+
+  cout << "move assignment test" << endl;
+
+  set bt6a(bt);
+  set bt6b;
+  bt6b.insert(v1);
+  bt6b = std::move(bt6a);
+  BOOST_TEST_EQ(bt6a.size(), 1U);  // required by implementation rather than specs
+  BOOST_TEST_EQ(bt6b.size(), bt.size());
+  BOOST_TEST(bt6b == bt);
+
+  cout << "range insert test" << endl;
+  
+  set bt7;
+  bt7.insert(bt.begin(), bt.end());
+  BOOST_TEST_EQ(bt7.size(), bt.size());
+  BOOST_TEST(bt7 == bt);
+
+  cout << "erase test" << endl;
+
+  set::size_type old_sz = bt.size();
+  set::size_type ct = bt.erase(20);
+  BOOST_TEST_EQ(ct, 1U);
+  --old_sz;
+  BOOST_TEST_EQ(bt.size(), old_sz);
+
+  BOOST_TEST(bt.height() > 1);  // make sure test covers several branch levels
+  for (int i = 1; i <= int(old_sz); ++i)
+  {
+//    cout << i << endl;
+    bt.erase(i);
+  }
+  //for (itr = bt.begin(); itr != bt.end(); ++itr)
+  //{
+  //  std::cout << "  " << itr->first << ", " << itr->second << std::endl;
+  //}
+  BOOST_TEST_EQ(bt.size(), 1U);
+  BOOST_TEST_EQ(bt.height(), 0);
+
+  cout << "clear test" << endl;
+
+  bt.clear();
+  BOOST_TEST_EQ(bt.size(), 0U);
+  BOOST_TEST_EQ(bt.height(), 0);
+
   return report_errors();
 }
 
