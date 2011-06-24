@@ -103,7 +103,8 @@ public:
   std::pair<iterator,bool>  insert(const value_type& x)  { return m_insert_unique(x); }
 
   template <class P>
-  std::pair<iterator,bool>  insert(P&& x)                { return m_insert_unique(x); }
+  std::pair<iterator,bool>  insert(P&& x)
+    { return m_insert_unique(std::forward<value_type>(x)); }
 
   template <class InputIterator>
     void insert(InputIterator first, InputIterator last)

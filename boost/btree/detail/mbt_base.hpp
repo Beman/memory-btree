@@ -424,7 +424,7 @@ protected:
   static Node* node_cast(node* np) {return reinterpret_cast<Node*>(np);}
 
   void      m_insert(const value_type& x, unique)  { m_insert_unique(x); }
-  //void      m_insert(const value_type& x, non_unique) { m_insert_non_unique(x); }
+  void      m_insert(const value_type& x, non_unique) { m_insert_non_unique(x); }
 
   //  mbt_map is the only derived class that provides a public interface to these:
   mapped_type&        m_op_square_brackets(const Key& x);
@@ -775,7 +775,7 @@ m_insert_unique(value_type&& x)
   if (!unique)
     return std::pair<iterator, bool>(insert_point, false);
 
-  m_leaf_insert(x, insert_point.m_node, insert_point.m_element);
+  m_leaf_insert(std::forward<value_type>(x), insert_point.m_node, insert_point.m_element);
   return std::pair<iterator, bool>(insert_point, true);
 }
 
@@ -803,7 +803,7 @@ m_insert_non_unique(P&& x)
 {
   iterator insert_point = m_special_lower_bound(key(x));
 
-  m_leaf_insert(x, insert_point.m_node, insert_point.m_element);
+  m_leaf_insert(std::forward<value_type>(x), insert_point.m_node, insert_point.m_element);
   return insert_point;
 }
 
@@ -1304,6 +1304,21 @@ find(const key_type& k)
   return (low != end() && !key_comp()(k, key(*low)))
     ? low
     : end();
+}
+
+//----------------------------------- count() -----------------------------------------//
+
+template <class Key, class Base, class Compare, class Allocator>
+typename mbt_base<Key,Base,Compare,Allocator>::size_type
+mbt_base<Key,Base,Compare,Allocator>::
+count(const key_type& k) const
+{
+  size_type ct = 0;
+  for (iterator it = find(k);
+    it != end() && !key_comp()(k, key(*it));
+    ++it)
+    ++ct;
+  return ct;
 }
 
 //----------------------------------- dump_dot -----------------------------------------//
