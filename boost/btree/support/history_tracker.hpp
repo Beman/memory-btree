@@ -78,18 +78,33 @@ public:
   history_tracker(history_tracker&& x)
     : _default_ctor(x._default_ctor), _ctor(x._ctor), _copy_ctor(x._copy_ctor),
       _copy_assign(x._copy_assign), _move_ctor(x._move_ctor+1),
-      _move_assign(x._move_assign), _dtor(x._dtor), T(std::move(std::forward<T>(x))) {}
+      _move_assign(x._move_assign), _dtor(x._dtor), T(std::move(std::forward<T>(x)))
+  {
+    if (log())
+      *log() << "  object " << this << " move constructor from object " << &x << "\n";
+  }
+
 
  ~history_tracker()
   {
     BOOST_ASSERT(destruction() == 0);  // assert: object not previously destroyed
     ++_dtor;
+    if (log())
+      *log() << "  object " << this << " destructor\n";
   }
 
   history_tracker&  operator=(const history_tracker& x)
   {
-    ++_copy_assign;
+    _default_ctor = x._default_ctor;
+    _ctor         = x._ctor;
+    _copy_ctor    = x._copy_ctor;
+    _copy_assign  = x._copy_assign + 1;
+    _move_ctor    = x._move_ctor;
+    _move_assign  = x._move_assign;
+    _dtor         = x._dtor;
     this->T::operator=(x);
+    if (log())
+      *log() << "  object " << this << " copy assignment from object " << &x << "\n";
     return *this;
   }
 
@@ -102,8 +117,12 @@ public:
     _move_ctor    = x._move_ctor;
     _move_assign  = x._move_assign + 1;
     _dtor         = x._dtor;
-    std::swap(*this, x);
-    return *this;
+
+    std::swap(*static_cast<T*>(this), *static_cast<T*>(&x));
+
+    if (log())
+      *log() << "  object " << this << " move assignment from object " << &x << "\n";
+   return *this;
   }
 
   int  default_construction() const            { return _default_ctor; }

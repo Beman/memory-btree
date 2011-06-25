@@ -62,6 +62,32 @@ int cpp_main(int, char*[])
   BOOST_TEST_EQ(z.move_assignment(), 0);
   BOOST_TEST_EQ(z.destruction(), 0);
 
-  
+  kiss u(std::move(z));
+  BOOST_TEST_EQ(u.default_construction(), 1);
+  BOOST_TEST_EQ(u.construction(), 0);
+  BOOST_TEST_EQ(u.copy_construction(), 1);
+  BOOST_TEST_EQ(u.copy_assignment(), 0);
+  BOOST_TEST_EQ(u.move_construction(), 1);
+  BOOST_TEST_EQ(u.move_assignment(), 0);
+  BOOST_TEST_EQ(u.destruction(), 0);
+
+  z = u;
+  BOOST_TEST_EQ(z.default_construction(), 1);
+  BOOST_TEST_EQ(z.construction(), 0);
+  BOOST_TEST_EQ(z.copy_construction(), 1);
+  BOOST_TEST_EQ(z.copy_assignment(), 1);
+  BOOST_TEST_EQ(z.move_construction(), 1);
+  BOOST_TEST_EQ(z.move_assignment(), 0);
+  BOOST_TEST_EQ(z.destruction(), 0);
+
+  y = std::move(z);
+  BOOST_TEST_EQ(y.default_construction(), 1);
+  BOOST_TEST_EQ(y.construction(), 0);
+  BOOST_TEST_EQ(y.copy_construction(), 1);
+  BOOST_TEST_EQ(y.copy_assignment(), 1);
+  BOOST_TEST_EQ(y.move_construction(), 1);
+  BOOST_TEST_EQ(y.move_assignment(), 1);
+  BOOST_TEST_EQ(y.destruction(), 0);
+
   return report_errors();
 }
