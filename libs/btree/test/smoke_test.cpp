@@ -18,6 +18,9 @@
 #include <iostream>
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/btree/mbt_map.hpp>
+#include <boost/btree/mbt_set.hpp>
+#include <map>
+#include <set>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/btree/detail/archetype.hpp>
 #include <boost/type_traits/alignment_of.hpp>
@@ -91,20 +94,20 @@ namespace
 
   //----------------------------------- test() -----------------------------------------//
 
-  template <class BT>
+  template <class BT, class STL>
   void test(bool unique = true)
   {
     typedef BT tree;
     
     cout << "type test" << endl;
 
-    BOOST_TEST((is_same<tree::key_type, int>::value));
-    BOOST_TEST((is_same<tree::mapped_type, long>::value));
-    BOOST_TEST((is_same<tree::value_type, std::pair<const int, long> >::value));
+    BOOST_TEST((is_same<tree::key_type, typename STL::key_type>::value));
+//    BOOST_TEST((is_same<tree::mapped_type, typename STL::mapped_type>::value));
+    BOOST_TEST((is_same<tree::value_type, typename STL::value_type >::value));
     BOOST_TEST((is_same<tree::iterator::reference,
-      std::pair<const int, long>& >::value));
+      typename STL::iterator::reference>::value));
     BOOST_TEST((is_same<tree::const_iterator::reference,
-      const std::pair<const int, long>& >::value));
+      typename STL::const_iterator::reference >::value));
 
     cout << "construction test" << endl;
 
@@ -125,17 +128,15 @@ namespace
 
     cout << "insertion test" << endl;
 
-    const tree::value_type v1(1, 1*100);
+    const tree::value_type v1(tree::make_value(1, 1));
     bt.insert(v1);
     BOOST_TEST_EQ(bt.size(), 1U);
 
-    //bt.insert(std::make_pair(3, 3*100));
-    const tree::value_type v3(3, 3*100);
+    const tree::value_type v3(tree::make_value(3, 3));
     bt.insert(v3);
     BOOST_TEST_EQ(bt.size(), 2U);
 
-    //bt.insert(std::make_pair(2, 2*100));
-    const tree::value_type v2(2, 2*100);
+    const tree::value_type v2(tree::make_value(2, 2));
     bt.insert(v2);
     BOOST_TEST_EQ(bt.size(), 3U);
 
@@ -146,14 +147,14 @@ namespace
     cout << "iterator test" << endl;
 
     tree::iterator it = bt.begin();
-    BOOST_TEST_EQ(it->first, 1);
-    BOOST_TEST_EQ(it->second, 100);
+    BOOST_TEST_EQ(tree::key(*it), 1);
+    BOOST_TEST_EQ(tree::mapped_value(*it), 1);
 
     cout << "const_iterator test" << endl;
 
     tree::const_iterator const_it = bt.begin();
-    BOOST_TEST_EQ(const_it->first, 1);
-    BOOST_TEST_EQ(const_it->second, 100);
+    BOOST_TEST_EQ(tree::key(*const_it), 1);
+    BOOST_TEST_EQ(tree::mapped_value(*const_it), 1);
 
     cout << "iterator conversion test" << endl;
 
@@ -166,14 +167,14 @@ namespace
     cout << "iteration test" << endl;
 
     it = bt.begin();
-    BOOST_TEST_EQ(it->first, 1);
-    BOOST_TEST_EQ(it->second, 100);
+    BOOST_TEST_EQ(tree::key(*it), 1);
+    BOOST_TEST_EQ(tree::mapped_value(*it), 1);
     ++it;
-    BOOST_TEST_EQ(it->first, 2);
-    BOOST_TEST_EQ(it->second, 200);
+    BOOST_TEST_EQ(tree::key(*it), 2);
+    BOOST_TEST_EQ(tree::mapped_value(*it), 2);
     ++it;
-    BOOST_TEST_EQ(it->first, 3);
-    BOOST_TEST_EQ(it->second, 300);
+    BOOST_TEST_EQ(tree::key(*it), 3);
+    BOOST_TEST_EQ(tree::mapped_value(*it), 3);
     ++it;
     BOOST_TEST(it == bt.end());
 
@@ -181,9 +182,7 @@ namespace
 
     for (int i = 100; i > 3; --i)
     {
-//      bt.insert(std::make_pair(i, i*100));
-      const tree::value_type v(i, i*100);
-      bt.insert(v);
+      bt.insert(tree::make_value(i, i));
     }
     BOOST_TEST_EQ(bt.size(), 100U);
     cout << "  complete, height() is " << bt.height() << '\n';
@@ -197,7 +196,7 @@ namespace
     {
   //    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
       ++loop_counter;
-      itr_checksum += itr->first;
+      itr_checksum += tree::key(*itr);
       loop_checksum += loop_counter;
     }
     BOOST_TEST_EQ(loop_counter, bt.size());
@@ -208,69 +207,69 @@ namespace
     for (itr = bt.end(); itr != bt.begin();)
     {
       --itr;
-      itr_checksum += itr->first;
+      itr_checksum += tree::key(*itr);
     }
     BOOST_TEST_EQ(itr_checksum, loop_checksum);
 
     cout << "lower_bound test" << endl;
 
-    BOOST_TEST_EQ(bt.lower_bound(0)->first, 1);
-    BOOST_TEST_EQ(bt.lower_bound(1)->first, 1);
-    BOOST_TEST_EQ(bt.lower_bound(20)->first, 20);
-    BOOST_TEST_EQ(bt.lower_bound(40)->first, 40);
+    BOOST_TEST_EQ(tree::key(*bt.lower_bound(0)), 1);
+    BOOST_TEST_EQ(tree::key(*bt.lower_bound(1)), 1);
+    BOOST_TEST_EQ(tree::key(*bt.lower_bound(20)), 20);
+    BOOST_TEST_EQ(tree::key(*bt.lower_bound(40)), 40);
     BOOST_TEST(bt.lower_bound(bt.size()+1)==bt.end());
 
     cout << "const lower_bound test" << endl;
 
-    BOOST_TEST_EQ(const_bt->lower_bound(0)->first, 1);
-    BOOST_TEST_EQ(const_bt->lower_bound(1)->first, 1);
-    BOOST_TEST_EQ(const_bt->lower_bound(20)->first, 20);
-    BOOST_TEST_EQ(const_bt->lower_bound(bt.size())->first, tree::key_type(bt.size()));
+    BOOST_TEST_EQ(tree::key(*const_bt->lower_bound(0)), 1);
+    BOOST_TEST_EQ(tree::key(*const_bt->lower_bound(1)), 1);
+    BOOST_TEST_EQ(tree::key(*const_bt->lower_bound(20)), 20);
+    BOOST_TEST_EQ(tree::key(*const_bt->lower_bound(bt.size())), tree::key_type(bt.size()));
     BOOST_TEST(const_bt->lower_bound(bt.size()+1)==const_bt->end());
 
     cout << "find test" << endl;
 
     BOOST_TEST(bt.find(0)==bt.end());
     for (int i = 1; i <= int(bt.size()); ++i)
-      BOOST_TEST_EQ(bt.find(i)->first, i);
+      BOOST_TEST_EQ(tree::key(*bt.find(i)), i);
     BOOST_TEST(bt.find(bt.size()+1)==bt.end());
 
     cout << "const find test" << endl;
 
     BOOST_TEST(const_bt->find(0)==const_bt->end());
     for (int i = 1; i <= int(bt.size()); ++i)
-      BOOST_TEST_EQ(const_bt->find(i)->first, i);
+      BOOST_TEST_EQ(tree::key(*const_bt->find(i)), i);
     BOOST_TEST(const_bt->find(bt.size()+1)==const_bt->end());
 
     cout << "upper_bound test" << endl;
 
-    BOOST_TEST_EQ(bt.upper_bound(0)->first, 1);
-    BOOST_TEST_EQ(bt.upper_bound(1)->first, 2);
-    BOOST_TEST_EQ(bt.upper_bound(20)->first, 21);
+    BOOST_TEST_EQ(tree::key(*bt.upper_bound(0)), 1);
+    BOOST_TEST_EQ(tree::key(*bt.upper_bound(1)), 2);
+    BOOST_TEST_EQ(tree::key(*bt.upper_bound(20)), 21);
     BOOST_TEST(bt.upper_bound(bt.size())==bt.end());
     BOOST_TEST(bt.upper_bound(bt.size()+1)==bt.end());
 
     cout << "const upper_bound test" << endl;
 
-    BOOST_TEST_EQ(const_bt->upper_bound(0)->first, 1);
-    BOOST_TEST_EQ(const_bt->upper_bound(1)->first, 2);
-    BOOST_TEST_EQ(const_bt->upper_bound(20)->first, 21);
+    BOOST_TEST_EQ(tree::key(*const_bt->upper_bound(0)), 1);
+    BOOST_TEST_EQ(tree::key(*const_bt->upper_bound(1)), 2);
+    BOOST_TEST_EQ(tree::key(*const_bt->upper_bound(20)), 21);
     BOOST_TEST(const_bt->upper_bound(bt.size())==const_bt->end());
     BOOST_TEST(const_bt->upper_bound(bt.size()+1)==const_bt->end());
 
     cout << "equal_range test" << endl;
 
     std::pair<tree::iterator, tree::iterator> eq = bt.equal_range(0);
-    BOOST_TEST(eq.first->first == 1);
-    BOOST_TEST(eq.second->first == 1);
+    BOOST_TEST(tree::key(*eq.first) == 1);
+    BOOST_TEST(tree::key(*eq.second) == 1);
     eq = bt.equal_range(1);
-    BOOST_TEST(eq.first->first == 1);
-    BOOST_TEST(eq.second->first == 2);
+    BOOST_TEST(tree::key(*eq.first) == 1);
+    BOOST_TEST(tree::key(*eq.second) == 2);
     eq = bt.equal_range(20);
-    BOOST_TEST(eq.first->first == 20);
-    BOOST_TEST(eq.second->first == 21);
+    BOOST_TEST(tree::key(*eq.first) == 20);
+    BOOST_TEST(tree::key(*eq.second) == 21);
     eq = bt.equal_range(bt.size());
-    BOOST_TEST(eq.first->first == tree::key_type(bt.size()));
+    BOOST_TEST(tree::key(*eq.first) == tree::key_type(bt.size()));
     BOOST_TEST(eq.second == bt.end());
     eq = bt.equal_range(bt.size()+1);
     BOOST_TEST(eq.first == bt.end());
@@ -279,16 +278,16 @@ namespace
     cout << "const equal_range test" << endl;
 
     std::pair<tree::const_iterator, tree::const_iterator> const_eq = const_bt->equal_range(0);
-    BOOST_TEST(const_eq.first->first == 1);
-    BOOST_TEST(const_eq.second->first == 1);
+    BOOST_TEST(tree::key(*const_eq.first) == 1);
+    BOOST_TEST(tree::key(*const_eq.second) == 1);
     const_eq = const_bt->equal_range(1);
-    BOOST_TEST(const_eq.first->first == 1);
-    BOOST_TEST(const_eq.second->first == 2);
+    BOOST_TEST(tree::key(*const_eq.first) == 1);
+    BOOST_TEST(tree::key(*const_eq.second) == 2);
     const_eq = const_bt->equal_range(20);
-    BOOST_TEST(const_eq.first->first == 20);
-    BOOST_TEST(const_eq.second->first == 21);
+    BOOST_TEST(tree::key(*const_eq.first) == 20);
+    BOOST_TEST(tree::key(*const_eq.second) == 21);
     const_eq = const_bt->equal_range(bt.size());
-    BOOST_TEST(const_eq.first->first == tree::key_type(bt.size()));
+    BOOST_TEST(tree::key(*const_eq.first) == tree::key_type(bt.size()));
     BOOST_TEST(const_eq.second == const_bt->end());
     const_eq = const_bt->equal_range(bt.size()+1);
     BOOST_TEST(const_eq.first == const_bt->end());
@@ -301,13 +300,13 @@ namespace
     if (unique)
     {
       BOOST_TEST_EQ(bt.size(), sz);
-      BOOST_TEST_EQ(bt.count(bt.key(v1)), 1);
+      BOOST_TEST_EQ(bt.count(tree::key(v1)), 1);
     }
     else
     {
       BOOST_TEST_EQ(bt.size(), sz+1);
-      BOOST_TEST_EQ(bt.count(bt.key(v1)), 2);
-      tree::const_iterator it = bt.find(bt.key(v1));
+      BOOST_TEST_EQ(bt.count(tree::key(v1)), 2);
+      tree::const_iterator it = bt.find(tree::key(v1));
       bt.erase(it);
     }
 
@@ -340,7 +339,7 @@ namespace
     for (itr = bt2.begin(); itr != bt2.end(); ++itr)
     {
   //    std::cout << "  " << itr->first << ", " << itr->second << std::endl;
-      itr_checksum += itr->first;
+      itr_checksum += tree::key(*itr);
     }
     BOOST_TEST_EQ(itr_checksum, loop_checksum);
 
@@ -429,8 +428,17 @@ int cpp_main(int, char*[])
 {
   archetype_test();
 
-  test< btree::mbt_map<int, long> >();
-  test< btree::mbt_multimap<int, long> >(false);
+  cout << "----------------- mbt_map test -----------------\n\n";
+  test<btree::mbt_map<int, long>, std::map<int, long> >();
+
+  cout << "\n----------------- mbt_multimap test -----------------\n\n";
+  test<btree::mbt_multimap<int, long>, std::multimap<int, long> >(false);
+
+  cout << "\n----------------- mbt_set test -----------------\n\n";
+  test<btree::mbt_set<int>, std::set<int> >();
+
+  cout << "\n----------------- mbt_multiset test -----------------\n\n";
+  test< btree::mbt_multiset<int>, std::multiset<int> >(false);
 
   return report_errors();
 }

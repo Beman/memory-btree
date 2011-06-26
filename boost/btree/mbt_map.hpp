@@ -100,11 +100,13 @@ public:
 //  T&        at(const Key& x);
 //  const T&  at(const Key& x) const;
 
-  std::pair<iterator,bool>  insert(const value_type& x)  { return m_insert_unique(x); }
+  std::pair<iterator,bool>
+    insert(const value_type& x)  { return m_insert_unique(x); }
 
   template <class P>
-  std::pair<iterator,bool>  insert(P&& x)
-    { return m_insert_unique(std::forward<value_type>(x)); }
+  std::pair<iterator,bool>
+    insert(P&& x)
+      { return m_insert_unique(std::forward<value_type>(x)); }
 
   template <class InputIterator>
     void insert(InputIterator first, InputIterator last)
@@ -116,28 +118,22 @@ public:
 };
 
 //--------------------------------------------------------------------------------------//
-//                                class mbt_map_base                                    //
+//                            class mbt_map_common_base                                 //
 //--------------------------------------------------------------------------------------//
 
 template <class Key, class T, class Compare>
-class mbt_map_base
+class mbt_map_common_base
 {
 protected:
-  typedef std::pair<Key, T>        leaf_value;
   class unique{};
   class non_unique{};
-  typedef unique                   uniqueness;
+  typedef std::pair<Key, T>        leaf_value;
+
 
 public:
   typedef T                        mapped_type;
   typedef std::pair<const Key, T>  value_type;
-
-  const Key& key(const value_type& v) const  // really handy, so expose
-    {return v.first;}
-  const T& mapped_value(const value_type& v) const
-    {return v.second;}
-  value_type make_value(const Key& k)
-  {return value_type(k, mapped_type());}
+  typedef value_type               iterator_value_type;
 
   class value_compare
   {
@@ -158,6 +154,26 @@ public:
     bool operator()(const Key& x, const value_type& y) const
       { return m_comp(x, y.first); }
   };
+
+  //  Functions not required by associative container requirements and not supplied by
+  //  standard library containers. Primary use cases include generic code such as a 
+  //  test suite or the implementation itself that wishes to abstract away the
+  //  difference between maps and sets.
+  static const Key& key(const value_type& v)          {return v.first;}
+  static const T&   mapped_value(const value_type& v) {return v.second;}
+  static value_type make_value(const Key& k)          {return value_type(k, mapped_type());}
+  static value_type make_value(const Key& k, const mapped_type& v) {return value_type(k, v);}
+};
+
+//--------------------------------------------------------------------------------------//
+//                                class mbt_map_base                                    //
+//--------------------------------------------------------------------------------------//
+
+template <class Key, class T, class Compare>
+class mbt_map_base : public mbt_map_common_base<Key, T, Compare>
+{
+protected:
+  typedef unique                   uniqueness;
 };
 
 //--------------------------------------------------------------------------------------//
@@ -255,44 +271,10 @@ public:
 //--------------------------------------------------------------------------------------//
 
 template <class Key, class T, class Compare>
-class mbt_multimap_base
+class mbt_multimap_base : public mbt_map_common_base<Key, T, Compare>
 {
 protected:
-  typedef std::pair<Key, T>        leaf_value;
-  class unique{};
-  class non_unique{};
   typedef non_unique               uniqueness;
-
-public:
-  typedef T                        mapped_type;
-  typedef std::pair<const Key, T>  value_type;
-
-  const Key& key(const value_type& v) const  // really handy, so expose
-    {return v.first;}
-  const T& mapped_value(const value_type& v) const
-    {return v.second;}
-  value_type make_value(const Key& k)
-  {return value_type(k, mapped_type());}
-
-  class value_compare
-  {
-  protected:
-    Compare m_comp;
-  public:
-    typedef bool                   result_type;
-    typedef value_type             first_argument_type;
-    typedef value_type             second_argument_type;
-
-    value_compare(Compare c) : m_comp(c) {}
-    bool operator()(const value_type& x, const value_type& y) const
-      { return m_comp(x.first, y.first); }
-
-    bool operator()(const value_type& x, const Key& y) const
-      { return m_comp(x.first, y); }
-
-    bool operator()(const Key& x, const value_type& y) const
-      { return m_comp(x, y.first); }
-  };
 };
 
 }  // namespace btree

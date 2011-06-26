@@ -81,7 +81,8 @@ public:
   typedef Allocator                               allocator_type;
   typedef value_type&                             reference;
   typedef const value_type&                       const_reference;
-  typedef iterator_type<value_type>               iterator;        // see 23.2
+  typedef iterator_type<typedef typename Base::iterator_value_type>                
+                                                  iterator;        // see 23.2
   typedef iterator_type<const value_type>         const_iterator;  // see 23.2
   typedef std::size_t                             size_type;       // see 23.2
   typedef std::ptrdiff_t                          difference_type; // see 23.2
