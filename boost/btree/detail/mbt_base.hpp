@@ -107,7 +107,7 @@ public:
 
   mbt_base(const mbt_base<Key,Base,Compare,Allocator>& x);  // copy constructor
 
-  mbt_base(mbt_base<Key,Base,Compare,Allocator>&& x);       // move constructor
+  // see derived classes for move constructor
 
 //  explicit mbt_base(const Allocator&);
 //  mbt_base(const mbt_base&, const Allocator&);
@@ -120,8 +120,7 @@ public:
   mbt_base<Key,Base,Compare,Allocator>&
     operator=(const mbt_base<Key,Base,Compare,Allocator>& x);  // copy assignment
 
-  mbt_base<Key,Base,Compare,Allocator>&
-    operator=(mbt_base<Key,Base,Compare,Allocator>&& x);       // move assignment
+  // see derived classes for move assignment
 
 //  mbt_base& operator=(initializer_list<value_type>);
 
@@ -480,19 +479,6 @@ mbt_base(const mbt_base<Key,Base,Compare,Allocator>& x)
     m_insert(*it, uniqueness());
 }
 
-//-------------------------------  move constructor  -----------------------------------//
-
-template <class Key, class Base, class Compare, class Allocator>
-mbt_base<Key,Base,Compare,Allocator>::
-mbt_base(mbt_base<Key,Base,Compare,Allocator>&& x)
-  : m_node_size(x.node_size()), m_key_compare(x.key_comp()),
-    m_value_compare(x.key_comp()), m_branch_value_compare(x.key_comp()),
-    m_alloc(x.get_allocator())
-{
-  m_init();
-  swap(x);
-}
-
 //-------------------------------  copy assignment  ------------------------------------//
 
 template <class Key, class Base, class Compare, class Allocator>
@@ -505,17 +491,6 @@ operator=(const mbt_base<Key,Base,Compare,Allocator>& x)
   for (const_iterator it = x.begin(); it != x.end(); ++it)
     m_insert(*it, uniqueness());
 
-  return *this;
-}
-
-//-------------------------------  move assignment  ------------------------------------//
-
-template <class Key, class Base, class Compare, class Allocator>
-mbt_base<Key,Base,Compare,Allocator>&
-mbt_base<Key,Base,Compare,Allocator>::
-operator=(mbt_base<Key,Base,Compare,Allocator>&& x)
-{
-  swap(x);
   return *this;
 }
 

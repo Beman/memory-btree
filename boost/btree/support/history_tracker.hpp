@@ -117,12 +117,10 @@ public:
     _move_ctor    = x._move_ctor;
     _move_assign  = x._move_assign + 1;
     _dtor         = x._dtor;
-
     std::swap(*static_cast<T*>(this), *static_cast<T*>(&x));
-
     if (log())
       *log() << "  object " << this << " move assignment from object " << &x << "\n";
-   return *this;
+    return *this;
   }
 
   int  default_construction() const            { return _default_ctor; }
