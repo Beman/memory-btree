@@ -21,9 +21,8 @@
 #include <boost/btree/mbt_set.hpp>
 #include <map>
 #include <set>
-#include <boost/type_traits/is_same.hpp>
+#include <boost/type_traits.hpp>
 #include <boost/btree/detail/archetype.hpp>
-#include <boost/type_traits/alignment_of.hpp>
 #include <utility>
 
 #include <boost/test/included/prg_exec_monitor.hpp>
@@ -92,10 +91,62 @@ namespace
     cout << endl;
   }
 
+  template <class BT>
+  void insert_unique_test(BT& bt, const typename BT::value_type& v, true_type)
+  {
+    std::pair<typename BT::iterator, bool> result = bt.insert(v);
+    BOOST_TEST(!result.second);
+    BOOST_TEST_EQ(bt.size(), 3U);
+  }
+
+  template <class BT>
+  void insert_unique_test(BT&, const typename BT::value_type&, false_type) {}
+
+  template <class BT>
+  void uniqueness_count_and_erase_test(BT& bt,
+    const typename BT::value_type& v, std::size_t sz, true_type) {}
+
+  template <class BT>
+  void uniqueness_count_and_erase_test(BT& bt,
+    const typename BT::value_type& v, std::size_t sz, false_type)
+  {
+    BOOST_TEST_EQ(bt.size(), sz+1);
+    BOOST_TEST_EQ(bt.count(BT::key(v)), 2);
+    typename BT::const_iterator it = bt.find(BT::key(v));
+    bt.erase(it);
+  }
+
+  template <class BT>
+  void operator_sq_bracket_test(BT& bt, true_type, true_type)
+  {
+    cout << "operator[] l-value test" << endl;
+
+    typedef BT tree;
+    tree::size_type sz = bt.size();
+    tree::key_type key = 20;
+    BOOST_TEST_EQ(bt.find(key)->second, key);
+    bt[key] = key*1000;
+    BOOST_TEST_EQ(bt.size(), sz);
+    BOOST_TEST_EQ(bt.find(key)->second, key*1000);
+    key = bt.size()+1;
+    BOOST_TEST(bt.find(key) == bt.end());
+    bt[key] = key*1000;
+    BOOST_TEST_EQ(bt.size(), sz+1);
+    BOOST_TEST_EQ(bt.find(key)->second, key*1000);
+    bt.erase(bt.find(key));  // return bt to original state
+  }
+  template <class BT>
+  void operator_sq_bracket_test(BT& bt, false_type, true_type) {}
+  template <class BT>
+  void operator_sq_bracket_test(BT& bt, true_type, false_type) {}
+  template <class BT>
+  void operator_sq_bracket_test(BT& bt, false_type, false_type) {}
+
   //----------------------------------- test() -----------------------------------------//
 
-  template <class BT, class STL>
-  void test(bool unique = true)
+  template <class BT, class STL, class IsUnique, class IsMapped>
+  //  Requires: IsUnique, IsMapped, be boost::true_type or boost::false_type
+  void test()
   {
     typedef BT tree;
     
@@ -140,10 +191,8 @@ namespace
     bt.insert(v2);
     BOOST_TEST_EQ(bt.size(), 3U);
 
-    //std::pair<tree::iterator, bool> result = bt.insert(v1);
-    //BOOST_TEST(!result.second);
-    //BOOST_TEST_EQ(bt.size(), 3U);
-
+    insert_unique_test<BT>(bt, v1, IsUnique());
+ 
     cout << "iterator test" << endl;
 
     tree::iterator it = bt.begin();
@@ -293,37 +342,17 @@ namespace
     BOOST_TEST(const_eq.first == const_bt->end());
     BOOST_TEST(const_eq.second == const_bt->end());
 
-    cout << "non-unique insert, count, and erase test" << endl;
+    cout << "unique/non-unique insert, count, and erase test" << endl;
 
     tree::size_type sz = bt.size();
     bt.insert(v1);
-    if (unique)
-    {
-      BOOST_TEST_EQ(bt.size(), sz);
-      BOOST_TEST_EQ(bt.count(tree::key(v1)), 1);
-    }
-    else
-    {
-      BOOST_TEST_EQ(bt.size(), sz+1);
-      BOOST_TEST_EQ(bt.count(tree::key(v1)), 2);
-      tree::const_iterator it = bt.find(tree::key(v1));
-      bt.erase(it);
-    }
 
-    //cout << "operator[] l-value test" << endl;
+    uniqueness_count_and_erase_test(bt, v1, sz, IsUnique());
+    BOOST_TEST_EQ(bt.size(), sz);  // test should have preserved size
+    BOOST_TEST_EQ(bt.count(tree::key(v1)), 1);
 
-    //sz = bt.size();
-    //tree::key_type key = 20;
-    //BOOST_TEST_EQ(bt.find(key)->second, key*100);
-    //bt[key] = key*1000;
-    //BOOST_TEST_EQ(bt.size(), sz);
-    //BOOST_TEST_EQ(bt.find(key)->second, key*1000);
-    //key = bt.size()+1;
-    //loop_checksum += key;
-    //BOOST_TEST(bt.find(key) == bt.end());
-    //bt[key] = key*1000;
-    //BOOST_TEST_EQ(bt.size(), sz+1);
-    //BOOST_TEST_EQ(bt.find(key)->second, key*1000);
+    operator_sq_bracket_test(bt, IsUnique(), IsMapped());
+    BOOST_TEST_EQ(bt.size(), sz);  // test should have preserved size 
 
     cout << "copy construction test" << endl;
 
@@ -429,16 +458,16 @@ int cpp_main(int, char*[])
   archetype_test();
 
   cout << "----------------- mbt_map test -----------------\n\n";
-  test<btree::mbt_map<int, long>, std::map<int, long> >();
+  test<btree::mbt_map<int, long>, std::map<int, long>, true_type, true_type>();
 
   cout << "\n----------------- mbt_multimap test -----------------\n\n";
-  test<btree::mbt_multimap<int, long>, std::multimap<int, long> >(false);
+  test<btree::mbt_multimap<int, long>, std::multimap<int, long>, false_type, true_type>();
 
   cout << "\n----------------- mbt_set test -----------------\n\n";
-  test<btree::mbt_set<int>, std::set<int> >();
+  test<btree::mbt_set<int>, std::set<int>, true_type, false_type>();
 
   cout << "\n----------------- mbt_multiset test -----------------\n\n";
-  test< btree::mbt_multiset<int>, std::multiset<int> >(false);
+  test< btree::mbt_multiset<int>, std::multiset<int>, false_type, false_type>();
 
   return report_errors();
 }

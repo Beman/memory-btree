@@ -26,6 +26,8 @@
 				<Option compiler="mingw_460" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory="..\..\..\..\..\..\trunk" />
+					<Add directory="..\..\..\..\..\..\btree-in-memory" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
