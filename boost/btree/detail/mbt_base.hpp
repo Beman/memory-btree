@@ -1049,9 +1049,9 @@ m_erase_from_parent(node* child)
   //  Example 1:
   //
   //                        * C *          root branch, height 2
-  //                       /     \
+  //                       /     \           pointing to
   //                      *       *        branches, height 1
-  //                     /         \
+  //                     /         \         pointing to
   //                    A...        C...   leaves, height 0
 
   if (np->is_empty())

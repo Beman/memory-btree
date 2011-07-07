@@ -111,7 +111,7 @@ namespace
     const typename BT::value_type& v, std::size_t sz, false_type)
   {
     BOOST_TEST_EQ(bt.size(), sz+1);
-    BOOST_TEST_EQ(bt.count(BT::key(v)), 2);
+    BOOST_TEST_EQ(bt.count(BT::key(v)), 2U);
     typename BT::const_iterator it = bt.find(BT::key(v));
     bt.erase(it);
   }
@@ -346,7 +346,7 @@ namespace
 
     uniqueness_count_and_erase_test(bt, v1, sz, IsUnique());
     BOOST_TEST_EQ(bt.size(), sz);  // test should have preserved size
-    BOOST_TEST_EQ(bt.count(BT::key(v1)), 1);
+    BOOST_TEST_EQ(bt.count(BT::key(v1)), 1U);
 
     operator_sq_bracket_test(bt, IsUnique(), IsMapped());
     BOOST_TEST_EQ(bt.size(), sz);  // test should have preserved size
@@ -457,8 +457,8 @@ int cpp_main(int, char*[])
   cout << "----------------- mbt_map test -----------------\n\n";
   test<btree::mbt_map<int, long>, std::map<int, long>, true_type, true_type>();
 
-//  cout << "\n----------------- mbt_multimap test -----------------\n\n";
-//  test<btree::mbt_multimap<int, long>, std::multimap<int, long>, false_type, true_type>();
+  cout << "\n----------------- mbt_multimap test -----------------\n\n";
+  test<btree::mbt_multimap<int, long>, std::multimap<int, long>, false_type, true_type>();
 
 //  cout << "\n----------------- mbt_set test -----------------\n\n";
 //  test<btree::mbt_set<int>, std::set<int>, true_type, false_type>();

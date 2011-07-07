@@ -236,14 +236,14 @@ class mbt_multimap   // short for memory_btree_multimap
 {
 public:
   typedef std::size_t size_type;
-  typedef typename mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>::iterator
+  typedef typename mbt_base<Key,mbt_multimap_base<Key,T,Compare>,Compare,Allocator>::iterator
     iterator;
-  typedef typename mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>::value_type
+  typedef typename mbt_base<Key,mbt_multimap_base<Key,T,Compare>,Compare,Allocator>::value_type
     value_type;
 
   explicit mbt_multimap(size_type node_sz = default_node_size,
     const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>
+      : mbt_base<Key,mbt_multimap_base<Key,T,Compare>,Compare,Allocator>
           (node_sz, comp, alloc) {}
 
 
@@ -251,19 +251,19 @@ public:
     mbt_multimap(InputIterator first, InputIterator last,   // range constructor
             size_type node_sz = default_node_size,
             const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>
+      : mbt_base<Key,mbt_multimap_base<Key,T,Compare>,Compare,Allocator>
           (first, last, node_sz, comp, alloc) {}
 
   mbt_multimap(const mbt_multimap<Key,T,Compare,Allocator>& x)  // copy constructor
-    : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>(x) {}
+    : mbt_base<Key,mbt_multimap_base<Key,T,Compare>,Compare,Allocator>(x) {}
 
   mbt_multimap(mbt_multimap<Key,T,Compare,Allocator>&& x)       // move constructor
-    : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>() {swap(x);}
+    : mbt_base<Key,mbt_multimap_base<Key,T,Compare>,Compare,Allocator>() {this->swap(x);}
 
   mbt_multimap<Key,T,Compare,Allocator>&
   operator=(mbt_multimap<Key,T,Compare,Allocator>&& x)     // move assignment
   {
-    swap(x);
+    this->swap(x);
     return *this;
   }
 
