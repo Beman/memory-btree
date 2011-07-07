@@ -32,8 +32,8 @@ public:
   typedef T history_tracker_base_type;
 
   history_tracker()
-    : _default_ctor(1), _ctor(0), _copy_ctor(0), _copy_assign(0),
-      _move_ctor(0), _move_assign(0), _dtor(0), T()
+    :  T(), _default_ctor(1), _ctor(0), _copy_ctor(0), _copy_assign(0),
+      _move_ctor(0), _move_assign(0), _dtor(0)
   {
     if (log())
       *log() << "  object " << this << " default constructor\n";
@@ -41,8 +41,8 @@ public:
 
   template <class U1>
   explicit history_tracker(const U1& u1)
-    : _default_ctor(0), _ctor(1), _copy_ctor(0), _copy_assign(0),
-      _move_ctor(0), _move_assign(0), _dtor(0), T(u1)
+    : T(u1), _default_ctor(0), _ctor(1), _copy_ctor(0), _copy_assign(0),
+      _move_ctor(0), _move_assign(0), _dtor(0)
   {
     if (log())
       *log() << "  object " << this << " 1-arg constructor\n";
@@ -50,8 +50,8 @@ public:
 
   template <class U1, class U2>
   history_tracker(const U1& u1, const U2& u2)
-    : _default_ctor(0), _ctor(1), _copy_ctor(0), _copy_assign(0),
-      _move_ctor(0), _move_assign(0), _dtor(0), T(u1, u2)
+    : T(u1, u2), _default_ctor(0), _ctor(1), _copy_ctor(0), _copy_assign(0),
+      _move_ctor(0), _move_assign(0), _dtor(0)
   {
     if (log())
       *log() << "  object " << this << " 2-arg constructor\n";
@@ -59,26 +59,26 @@ public:
 
   template <class U1, class U2, class U3>
   history_tracker(const U1& u1, const U2& u2, const U3& u3)
-    : _default_ctor(0), _ctor(1), _copy_ctor(0), _copy_assign(0),
-      _move_ctor(0), _move_assign(0), _dtor(0), T(u1, u2, u3)
+    : T(u1, u2, u3), _default_ctor(0), _ctor(1), _copy_ctor(0), _copy_assign(0),
+      _move_ctor(0), _move_assign(0), _dtor(0)
   {
     if (log())
       *log() << "  object " << this << " 3-arg constructor\n";
   }
 
   history_tracker(const history_tracker& x)
-    : _default_ctor(x._default_ctor), _ctor(x._ctor), _copy_ctor(x._copy_ctor+1),
+    : T(x), _default_ctor(x._default_ctor), _ctor(x._ctor), _copy_ctor(x._copy_ctor+1),
       _copy_assign(x._copy_assign), _move_ctor(x._move_ctor),
-      _move_assign(x._move_assign), _dtor(x._dtor), T(x)
+      _move_assign(x._move_assign), _dtor(x._dtor)
   {
     if (log())
       *log() << "  object " << this << " copy constructor from object " << &x << "\n";
   }
 
   history_tracker(history_tracker&& x)
-    : _default_ctor(x._default_ctor), _ctor(x._ctor), _copy_ctor(x._copy_ctor),
-      _copy_assign(x._copy_assign), _move_ctor(x._move_ctor+1),
-      _move_assign(x._move_assign), _dtor(x._dtor), T(std::move(std::forward<T>(x)))
+    : T(std::move(std::forward<T>(x))), _default_ctor(x._default_ctor), _ctor(x._ctor),
+      _copy_ctor(x._copy_ctor), _copy_assign(x._copy_assign), _move_ctor(x._move_ctor+1),
+      _move_assign(x._move_assign), _dtor(x._dtor)
   {
     if (log())
       *log() << "  object " << this << " move constructor from object " << &x << "\n";
@@ -142,12 +142,12 @@ public:
     os << move_assignment()      << " move_assignment\n";
     os << destruction()          << " destruction\n";
   }
-  
+
   static std::ostream* log()
   {
     return _stream();
   }
-  
+
   static void log(std::ostream* os)  // 0 turns of logging
   {
     _stream() = os;
