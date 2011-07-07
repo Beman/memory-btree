@@ -26,7 +26,7 @@ namespace btree {
 //--------------------------------------------------------------------------------------//
 
 template <class Key, class Compare = std::less<Key>,
-          class Allocator = std::allocator<const Key> >
+          class Allocator = std::allocator<Key> >
   class mbt_set;   // short for memory_btree_set
 
 template <class Key, class Compare, class Allocator> inline
@@ -70,28 +70,39 @@ class mbt_set   // short for memory_btree_set
   : public mbt_base<Key, mbt_set_base<Key,Compare>, Compare, Allocator>
 {
 public:
+  typedef std::size_t size_type;
+  typedef typename mbt_base<Key,mbt_set_base<Key,Compare>,Compare,Allocator>::iterator
+    iterator;
+  typedef typename mbt_base<Key,mbt_set_base<Key,Compare>,Compare,Allocator>::value_type
+    value_type;
 
   explicit mbt_set(size_type node_sz = default_node_size,
     const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base(node_sz, comp, alloc) {}
+      : mbt_base<Key,mbt_set_base<Key,Compare>,Compare,Allocator>(node_sz, comp, alloc) {}
 
-
-  template <class InputIterator>
+   template <class InputIterator>
     mbt_set(InputIterator first, InputIterator last,   // range constructor
             size_type node_sz = default_node_size,
             const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base(first, last, node_sz, comp, alloc) {}
+      : mbt_base<Key,mbt_set_base<Key,Compare>,Compare,Allocator>(first, last, node_sz, comp, alloc) {}
 
   mbt_set(const mbt_set<Key,Compare,Allocator>& x)  // copy constructor
-    : mbt_base(x) {}
+    : mbt_base<Key,mbt_set_base<Key,Compare>,Compare,Allocator>(x) {}
 
   mbt_set(mbt_set<Key,Compare,Allocator>&& x)       // move constructor
-    : mbt_base() {swap(x);}
+    : mbt_base<Key,mbt_set_base<Key,Compare>,Compare,Allocator>() {this->swap(x);}
+
+  mbt_set<Key,Compare,Allocator>&
+  operator=(const mbt_set<Key,Compare,Allocator>& x)  // copy assignment
+  {
+    mbt_base<Key,mbt_set_base<Key,Compare>,Compare,Allocator>::operator=(x);
+    return *this;
+  }
 
   mbt_set<Key,Compare,Allocator>&
   operator=(mbt_set<Key,Compare,Allocator>&& x)     // move assignment
   {
-    swap(x);
+    this->swap(x);
     return *this;
   }
 
@@ -128,11 +139,11 @@ public:
   typedef Compare           value_compare;
 
   //  Functions not required by associative container requirements and not supplied by
-  //  standard library containers. Primary use cases include generic code such as a 
+  //  standard library containers. Primary use cases include generic code such as a
   //  test suite or the implementation itself that wishes to abstract away the
   //  difference between maps and sets.
   static const Key&  key(const value_type& v)          {return v;}
-  static const Key&  mapped_value(const value_type& v) {return v;} 
+  static const Key&  mapped_value(const value_type& v) {return v;}
   static const Key&  make_value(const Key& k)          {return k;}
   static Key&&       make_value(Key&& k)               {return k;}
   static const Key&  make_value(const Key& k, const mapped_type&) {return k;}
@@ -146,7 +157,8 @@ template <class Key, class Compare>
 class mbt_set_base : public mbt_set_common_base<Key, Compare>
 {
 protected:
-  typedef unique        uniqueness;
+  typedef typename boost::btree::mbt_set_common_base<Key, Compare>::unique
+    uniqueness;
 };
 
 //--------------------------------------------------------------------------------------//
@@ -156,7 +168,7 @@ protected:
 //--------------------------------------------------------------------------------------//
 
 template <class Key, class Compare = std::less<Key>,
-          class Allocator = std::allocator<const Key> >
+          class Allocator = std::allocator<Key> >
   class mbt_multiset;   // short for memory_btree_multiset
 
 template <class Key, class Compare, class Allocator> inline
@@ -186,8 +198,8 @@ template <class Key, class Compare, class Allocator> inline
                   const mbt_multiset<Key,Compare,Allocator>& y)  { return !(x > y);}
 
 template <class Key, class Compare, class Allocator> inline
-  void swap(mbt_multiset<Key,Compare,Allocator>& x, mbt_multiset<Key,Compare,Allocator>& y)
-    { x.swap(y); }
+  void swap(mbt_multiset<Key,Compare,Allocator>& x,
+            mbt_multiset<Key,Compare,Allocator>& y) { x.swap(y); }
 
 template <class Key, class Compare> class mbt_multiset_base;
 
@@ -200,28 +212,42 @@ class mbt_multiset   // short for memory_btree_multiset
   : public mbt_base<Key, mbt_multiset_base<Key,Compare>, Compare, Allocator>
 {
 public:
+  typedef std::size_t size_type;
+  typedef typename mbt_base<Key,mbt_multiset_base<Key,Compare>,Compare,Allocator>::iterator
+    iterator;
+  typedef typename mbt_base<Key,mbt_multiset_base<Key,Compare>,Compare,Allocator>::value_type
+    value_type;
 
   explicit mbt_multiset(size_type node_sz = default_node_size,
     const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base(node_sz, comp, alloc) {}
+      : mbt_base<Key,mbt_multiset_base<Key,Compare>,Compare,Allocator>
+         (node_sz, comp, alloc) {}
 
 
   template <class InputIterator>
     mbt_multiset(InputIterator first, InputIterator last,   // range constructor
             size_type node_sz = default_node_size,
             const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base(first, last, node_sz, comp, alloc) {}
+      : mbt_base<Key,mbt_multiset_base<Key,Compare>,Compare,Allocator>
+         (first, last, node_sz, comp, alloc) {}
 
   mbt_multiset(const mbt_multiset<Key,Compare,Allocator>& x)  // copy constructor
-    : mbt_base(x) {}
+    : mbt_base<Key,mbt_multiset_base<Key,Compare>,Compare,Allocator>(x) {}
 
   mbt_multiset(mbt_multiset<Key,Compare,Allocator>&& x)       // move constructor
-    : mbt_base() {swap(x);}
+    : mbt_base<Key,mbt_multiset_base<Key,Compare>,Compare,Allocator>() {this->swap(x);}
 
   mbt_multiset<Key,Compare,Allocator>&
-  operator=(mbt_multiset<Key,Compare,Allocator>&& x)     // move assignment
+  operator=(const mbt_multiset<Key,Compare,Allocator>& x)     // copy assignment
   {
-    swap(x);
+    mbt_base<Key,mbt_multiset_base<Key,Compare>,Compare,Allocator>::operator=(x);
+    return *this;
+  }
+
+  mbt_multiset<Key,Compare,Allocator>&
+  operator=(mbt_multiset<Key,Compare,Allocator>&& x)          // move assignment
+  {
+    this->swap(x);
     return *this;
   }
 
@@ -248,7 +274,8 @@ template <class Key, class Compare>
 class mbt_multiset_base : public mbt_set_common_base<Key, Compare>
 {
 protected:
-  typedef non_unique uniqueness;
+  typedef typename boost::btree::mbt_set_common_base<Key, Compare>::non_unique
+    uniqueness;
 };
 
 }  // namespace btree

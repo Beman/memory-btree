@@ -18,7 +18,7 @@
 #include <iostream>
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/btree/mbt_map.hpp>
-//#include <boost/btree/mbt_set.hpp>
+#include <boost/btree/mbt_set.hpp>
 #include <map>
 #include <set>
 #include <boost/type_traits.hpp>
@@ -397,7 +397,7 @@ namespace
     cout << "copy assignment test" << endl;
 
     BT bt5;
-//    bt5 = bt;
+    bt5 = bt;
     BOOST_TEST_EQ(bt.size(), bt5.size());
     BOOST_TEST(bt == bt5);
 
@@ -460,11 +460,11 @@ int cpp_main(int, char*[])
   cout << "\n----------------- mbt_multimap test -----------------\n\n";
   test<btree::mbt_multimap<int, long>, std::multimap<int, long>, false_type, true_type>();
 
-//  cout << "\n----------------- mbt_set test -----------------\n\n";
-//  test<btree::mbt_set<int>, std::set<int>, true_type, false_type>();
+  cout << "\n----------------- mbt_set test -----------------\n\n";
+  test<btree::mbt_set<int>, std::set<int>, true_type, false_type>();
 
-//  cout << "\n----------------- mbt_multiset test -----------------\n\n";
-//  test< btree::mbt_multiset<int>, std::multiset<int>, false_type, false_type>();
+  cout << "\n----------------- mbt_multiset test -----------------\n\n";
+  test< btree::mbt_multiset<int>, std::multiset<int>, false_type, false_type>();
 
   return report_errors();
 }

@@ -21,7 +21,7 @@ namespace btree {
 //                                                                                      //
 //  "mbt_map" is a placeholder name for an in-memory B+tree map class that is similar   //
 //  to std::map. The primary difference is that all insert, emplace, and erase          //
-//  operations may (and usually do) invalidate iterators.                               //                     //
+//  operations may (and usually do) invalidate iterators.                               //
 //                                                                                      //
 //--------------------------------------------------------------------------------------//
 
@@ -94,6 +94,13 @@ public:
 
   mbt_map(mbt_map<Key,T,Compare,Allocator>&& x)       // move constructor
     : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>() {this->swap(x);}
+
+  mbt_map<Key,T,Compare,Allocator>&
+  operator=(const mbt_map<Key,T,Compare,Allocator>& x)  // copy assignment
+  {
+    mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>::operator=(x);
+    return *this;
+  }
 
   mbt_map<Key,T,Compare,Allocator>&
   operator=(mbt_map<Key,T,Compare,Allocator>&& x)     // move assignment
@@ -259,6 +266,13 @@ public:
 
   mbt_multimap(mbt_multimap<Key,T,Compare,Allocator>&& x)       // move constructor
     : mbt_base<Key,mbt_multimap_base<Key,T,Compare>,Compare,Allocator>() {this->swap(x);}
+
+  mbt_multimap<Key,T,Compare,Allocator>&
+  operator=(const mbt_multimap<Key,T,Compare,Allocator>& x)  // copy assignment
+  {
+    mbt_base<Key,mbt_multimap_base<Key,T,Compare>,Compare,Allocator>::operator=(x);
+    return *this;
+  }
 
   mbt_multimap<Key,T,Compare,Allocator>&
   operator=(mbt_multimap<Key,T,Compare,Allocator>&& x)     // move assignment
