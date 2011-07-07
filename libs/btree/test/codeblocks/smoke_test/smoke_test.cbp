@@ -33,7 +33,7 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 			<Add directory="..\..\..\..\..\..\trunk" />
-			<Add directory="..\..\..\..\..\..\btree-in-memory" />
+			<Add directory="..\..\..\..\.." />
 		</Compiler>
 		<Unit filename="..\..\..\..\..\boost\btree\mbt_map.hpp" />
 		<Unit filename="..\..\smoke_test.cpp" />

@@ -70,28 +70,35 @@ class mbt_map   // short for memory_btree_map
   : public mbt_base<Key, mbt_map_base<Key,T,Compare>, Compare, Allocator>
 {
 public:
+  typedef std::size_t size_type;
+  typedef typename mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>::iterator
+    iterator;
+  typedef typename mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>::value_type
+    value_type;
 
   explicit mbt_map(size_type node_sz = default_node_size,
     const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base(node_sz, comp, alloc) {}
+      : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>
+          (node_sz, comp, alloc) {}
 
 
   template <class InputIterator>
     mbt_map(InputIterator first, InputIterator last,   // range constructor
             size_type node_sz = default_node_size,
             const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base(first, last, node_sz, comp, alloc) {}
+      : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>
+          (first, last, node_sz, comp, alloc) {}
 
   mbt_map(const mbt_map<Key,T,Compare,Allocator>& x)  // copy constructor
-    : mbt_base(x) {}
+    : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>(x) {}
 
   mbt_map(mbt_map<Key,T,Compare,Allocator>&& x)       // move constructor
-    : mbt_base() {swap(x);}
+    : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>() {this->swap(x);}
 
   mbt_map<Key,T,Compare,Allocator>&
   operator=(mbt_map<Key,T,Compare,Allocator>&& x)     // move assignment
   {
-    swap(x);
+    this->swap(x);
     return *this;
   }
 
@@ -133,7 +140,7 @@ protected:
 public:
   typedef T                        mapped_type;
   typedef std::pair<const Key, T>  value_type;
-  typedef value_type               iterator_value_type;
+  typedef std::pair<const Key, T>  iterator_value_type;
 
   class value_compare
   {
@@ -156,7 +163,7 @@ public:
   };
 
   //  Functions not required by associative container requirements and not supplied by
-  //  standard library containers. Primary use cases include generic code such as a 
+  //  standard library containers. Primary use cases include generic code such as a
   //  test suite or the implementation itself that wishes to abstract away the
   //  difference between maps and sets.
   static const Key& key(const value_type& v)          {return v.first;}
@@ -173,7 +180,8 @@ template <class Key, class T, class Compare>
 class mbt_map_base : public mbt_map_common_base<Key, T, Compare>
 {
 protected:
-  typedef unique                   uniqueness;
+  typedef typename boost::btree::mbt_map_common_base<Key, T, Compare>::unique
+    uniqueness;
 };
 
 //--------------------------------------------------------------------------------------//
@@ -213,8 +221,8 @@ template <class Key, class T, class Compare, class Allocator> inline
                   const mbt_multimap<Key,T,Compare,Allocator>& y)  { return !(x > y);}
 
 template <class Key, class T, class Compare, class Allocator> inline
-  void swap(mbt_multimap<Key,T,Compare,Allocator>& x, mbt_multimap<Key,T,Compare,Allocator>& y)
-    { x.swap(y); }
+  void swap(mbt_multimap<Key,T,Compare,Allocator>& x,
+            mbt_multimap<Key,T,Compare,Allocator>& y) { x.swap(y); }
 
 template <class Key, class T, class Compare> class mbt_multimap_base;
 
@@ -227,23 +235,30 @@ class mbt_multimap   // short for memory_btree_multimap
   : public mbt_base<Key, mbt_multimap_base<Key,T,Compare>, Compare, Allocator>
 {
 public:
+  typedef std::size_t size_type;
+  typedef typename mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>::iterator
+    iterator;
+  typedef typename mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>::value_type
+    value_type;
 
   explicit mbt_multimap(size_type node_sz = default_node_size,
     const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base(node_sz, comp, alloc) {}
+      : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>
+          (node_sz, comp, alloc) {}
 
 
   template <class InputIterator>
     mbt_multimap(InputIterator first, InputIterator last,   // range constructor
             size_type node_sz = default_node_size,
             const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-      : mbt_base(first, last, node_sz, comp, alloc) {}
+      : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>
+          (first, last, node_sz, comp, alloc) {}
 
   mbt_multimap(const mbt_multimap<Key,T,Compare,Allocator>& x)  // copy constructor
-    : mbt_base(x) {}
+    : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>(x) {}
 
   mbt_multimap(mbt_multimap<Key,T,Compare,Allocator>&& x)       // move constructor
-    : mbt_base() {swap(x);}
+    : mbt_base<Key,mbt_map_base<Key,T,Compare>,Compare,Allocator>() {swap(x);}
 
   mbt_multimap<Key,T,Compare,Allocator>&
   operator=(mbt_multimap<Key,T,Compare,Allocator>&& x)     // move assignment
@@ -274,7 +289,8 @@ template <class Key, class T, class Compare>
 class mbt_multimap_base : public mbt_map_common_base<Key, T, Compare>
 {
 protected:
-  typedef non_unique               uniqueness;
+  typedef typename boost::btree::mbt_map_common_base<Key, T, Compare>::non_unique
+    uniqueness;
 };
 
 }  // namespace btree

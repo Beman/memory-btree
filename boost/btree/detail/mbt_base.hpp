@@ -45,7 +45,7 @@ TODO:
   * erase: doesn't m_erase_from_parent invalidate nxt_it? Fix or document.
 
   * uniqueness s/b renamed unique and be a typedef for true_type or false_type
-  
+
   * Tighten requirements on Key and T to match standard library.
     Change archetype accordingly.
 
@@ -57,6 +57,8 @@ TODO:
 
 namespace boost {
 namespace btree {
+
+  const std::size_t default_node_size = 2048;
 
 //--------------------------------------------------------------------------------------//
 //                                  class mbt_base                                      //
@@ -77,11 +79,11 @@ public:
   typedef typename Base::value_type               value_type;
   typedef typename Base::mapped_type              mapped_type;
   typedef Compare                                 key_compare;
-  typedef typename Base::value_compare            value_compare; 
+  typedef typename Base::value_compare            value_compare;
   typedef Allocator                               allocator_type;
   typedef value_type&                             reference;
   typedef const value_type&                       const_reference;
-  typedef iterator_type<typedef typename Base::iterator_value_type>                
+  typedef iterator_type<typename Base::iterator_value_type>
                                                   iterator;        // see 23.2
   typedef iterator_type<const value_type>         const_iterator;  // see 23.2
   typedef std::size_t                             size_type;       // see 23.2
@@ -93,8 +95,6 @@ public:
 //                                                    const_pointer;
   typedef std::reverse_iterator<iterator>         reverse_iterator;
   typedef std::reverse_iterator<const_iterator>   const_reverse_iterator;
-
-  static const size_type                          default_node_size = 2048;
 
   // 23.4.4.2, construct/copy/destroy:
 
