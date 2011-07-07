@@ -1,0 +1,27 @@
+# Boost Memory B-tree Library Build Jamfile
+
+# (C) Copyright Beman Dawes 2011
+# Distributed under the Boost Software License, Version 1.0.
+# See www.boost.org/LICENSE_1_0.txt
+
+project boost/btree
+    : source-location ../support/detail
+    : usage-requirements # pass these requirement to dependents (i.e. users)
+      <link>shared:<define>BOOST_BTREE_DYN_LINK=1
+      <link>static:<define>BOOST_BTREE_STATIC_LINK=1
+    ;
+
+SOURCES = timer run_timer run_timer_ctors ;
+
+lib boost_btree
+    :
+    $(SOURCES).cpp
+    ../../system/build//boost_system
+    :
+    <link>shared:<define>BOOST_ALL_DYN_LINK=1 # tell source we're building dll's
+    <link>static:<define>BOOST_All_STATIC_LINK=1 # tell source we're building static lib's
+    :
+    :
+    ;
+
+boost-install boost_btree ;

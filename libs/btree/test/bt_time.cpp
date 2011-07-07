@@ -36,7 +36,7 @@ namespace
   long initial_n;
   long seed = 1;
   long lg = 0;
-  int node_sz = boost::btree::mbt_map<boost::int32_t, boost::int32_t>::default_node_size;
+  int node_sz = boost::btree::default_node_size;
   bool do_create (true);
   bool do_preload (false);
   bool do_insert (true);
