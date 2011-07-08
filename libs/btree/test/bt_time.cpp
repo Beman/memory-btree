@@ -68,6 +68,25 @@ namespace
     return ratio_btree_to_stl ? "ratio btree/stl" : "ratio stl/btree";
   }
 
+  void relative_time(btree::microsecond_t btree, btree::microsecond_t stl)
+  {
+    if (!btree || !stl)
+      return;
+    long double b = n / (btree/sec);
+    long double s = n / (stl/sec);
+
+    if (btree <= stl)
+    {
+      cout << "  btree: " << b << " per sec, " << (b/s) * 100.0L - 100.0L << "% faster than stl\n";
+      cout << "    stl: " << s << " per sec, " << 100.0L - (s/b) * 100.0L << "% slower than btree\n";
+    }
+    else
+    {
+      cout << "  btree: " << b << " per sec, " << 100.0L - (b/s) * 100.0L << "% slower than stl\n";
+      cout << "    stl: " << s << " per sec, " << (s/b) * 100.0L - 100.0L << "% faster than btree\n";
+    }
+  }
+
   class indirect_factory
   {
   public:
@@ -217,8 +236,7 @@ namespace
         t.report();
       }
 
-      cout << "B-tree timing complete" << endl;
-
+      cout << "\nB-tree timing complete" << endl;
     }
 
     typedef std::map<typename BT::key_type, long,  typename BT::key_compare>  stl_type;
@@ -260,9 +278,7 @@ namespace
         else
           cerr << "  <td align=\"right\">N/A</td>\n";
       }
-      if (insert_tm.wall && this_tm.wall)
-        cout << "  " << ratio_type() << " wall clock time: "
-             << ratio_of(insert_tm.wall, this_tm.wall) << '\n';
+      relative_time(insert_tm.wall, this_tm.wall);
       //if (verbose && this_tm.system + this_tm.user)
       //  cout << "  " << ratio_type() << " cpu time: "
       //       << ((insert_tm.system + insert_tm.user) * 1.0)
@@ -301,9 +317,7 @@ namespace
         else
           cerr << "  <td align=\"right\">N/A</td>\n";
       }
-      if (iterate_tm.wall && this_tm.wall)
-        cout << "  " << ratio_type() << " wall clock time: "
-             << ratio_of(iterate_tm.wall, this_tm.wall) << '\n';
+      relative_time(iterate_tm.wall, this_tm.wall);
       //if (verbose && this_tm.system + this_tm.user)
       //  cout << "  " << ratio_type() << " cpu time: "
       //       << ((iterate_tm.system + iterate_tm.user) * 1.0)
@@ -352,9 +366,7 @@ namespace
         else
           cerr << "  <td align=\"right\">N/A</td>\n";
       }
-      if (find_tm.wall && this_tm.wall)
-        cout << "  " << ratio_type() << " wall clock time: "
-             << ratio_of(find_tm.wall, this_tm.wall) << '\n';
+      relative_time(find_tm.wall, this_tm.wall);
       //if (verbose && this_tm.system + this_tm.user)
       //  cout << "  " << ratio_type() << " cpu time: "
       //       << ((find_tm.system + find_tm.user) * 1.0)
@@ -388,14 +400,12 @@ namespace
         else
           cerr << "  <td align=\"right\">N/A</td>\n</tr>  <td align=\"right\">N/A</td>\n</tr>\n";
       }
-      if (find_tm.wall && this_tm.wall)
-        cout << "  " << ratio_type() << " wall clock time: "
-             << ratio_of(erase_tm.wall, this_tm.wall) << '\n';
+      relative_time(erase_tm.wall, this_tm.wall);
 //      if (verbose && this_tm.system + this_tm.user)
 //        cout << "  " << ratio_type() << " cpu time: "
 //             << ((erase_tm.system + erase_tm.user) * 1.0)
 //                / (this_tm.system + this_tm.user) << '\n';
-      cout << "STL timing complete" << endl;
+      cout << "\nSTL timing complete" << endl;
     }
   }
 
@@ -486,6 +496,10 @@ int cpp_main(int argc, char * argv[])
 
   cout << "sizeof(std::string) is " << sizeof(std::string) << "\n";
   cout << "starting tests with node size " << node_sz << "\n";
+
+  cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  cout.precision(1);
+
 
   {
     cout << "\n*************************  key_type long tests  ****************************\n";
