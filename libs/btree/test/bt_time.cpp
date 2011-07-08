@@ -174,7 +174,7 @@ namespace
 #       if !defined(NDEBUG)
           if (itr == bt.end())
             throw std::runtime_error("btree find() returned end()");
-          if (itr->first != k)
+          if (bt.key_comp()(itr->first,k) || bt.key_comp()(k,itr->first))
           {
             cout << "*** first is " << itr->first << ", k is " << k << endl;
             throw std::runtime_error("btree find() returned wrong iterator");
@@ -325,7 +325,7 @@ namespace
 #       if !defined(NDEBUG)
           if (itr == stl.end())
             throw std::runtime_error("stl find() returned end()");
-          if (itr->first != k)
+          if (stl.key_comp()(itr->first,k) || stl.key_comp()(k,itr->first))
           {
             cout << "*** first is " << itr->first << ", k is " << k << endl;
             throw std::runtime_error("stl find() returned wrong iterator");
@@ -467,7 +467,7 @@ int cpp_main(int argc, char * argv[])
       " Options:\n"
       "   path     Specifies the test file path; default test.btree\n"
       "   -s#      Seed for random number generator; default 1\n"
-      "   -n#      Node size (>=128); default " << "N/A" /*btree::default_node_size*/ << "\n"
+      "   -n#      Node size (>=128); default " << btree::default_node_size << "\n"
       "              Small node sizes are useful for stress testing\n"
       "   -l#      log progress every # actions; default is to not log\n"
       "   -xc      No create; use file from prior -xe run\n"

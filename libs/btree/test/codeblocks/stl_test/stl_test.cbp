@@ -16,7 +16,7 @@
 					<Add option="-w" />
 					<Add option="-g" />
 					<Add directory="..\..\..\..\..\..\trunk" />
-					<Add directory="..\..\..\..\..\..\btree-in-memory" />
+					<Add directory="..\..\..\..\.." />
 				</Compiler>
 			</Target>
 			<Target title="Release">
